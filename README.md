@@ -1,180 +1,16 @@
-Artix Linux Install Guide:
+# Artix Linux Installation Guide:
 
--Auto Mount USB Stick: 
+## Verify ISO image signature after downloading from the HTTP mirror:
 ```bash
-# /dev/sdb1 UUID=11834887-d9d9-4f74-b7b8-28428eb9f93a   /mnt/usb    ext4        defaults    0 0
+# sha256sum file_name.iso
 ```
--<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
--<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-nginx:
-$ sudo pacman -S nginx nginx-runit 
--It's free open-source HTTP server/reverse proxy with low resource consumption
--The default page served at http://127.0.0.1 is /usr/share/nginx/html/index.html
--Main config file is /etc/nginx/nginx.conf
--nginx has one master process and several worker processes, and the master process reads/evaluates configuration and maintains worker processes. Worker processes do actual processing of requests. nginx uses event-based model and OS-dependant mechanisms to distribute requests among worker processes
--Must define number of worker processes as either fixed or automatically adjusted to the number of CPU cores
--To start nginx, run executable file as sudo
-$ sudo nginx
--Controls below should be implemented by same user that initiated nginx
--Can be controlled with -s or signal flag:
--s stop = fast shutdown
--s quit = graceful shutdown allowing worker processes to finish serving current requests
--s reload = reload config file
--s reopen = reopening the log files
--Once the master process (started by nginx init script) receives the signal to reload configuration, it checks the syntax validity of the new configuration file and tries to apply the configuration provided in it. If this is a success, the master process starts new worker processes and sends messages to old worker processes, requesting them to shut down. Otherwise, the master process rolls back the changes and continues to work with the old configuration. Old worker processes, receiving a command to shut down, stop accepting new connections and continue to service current requests until all such requests are serviced. After that, the old worker processes exit. 
--By default running on port 80 accessed by 127.0.0.1 or 'http://localhost'
--You will get file permission error trying to change nginx directory out of /usr/share/nginx and you should instead copy over the Website/ directory into /usr/share/nginx/html/ and it will be owned by root then and work properly, also you only have the 'working' version there so you can work on the other version without worry
--Only root processes can listen to ports below 1024 like 80/443 so this is why nginx must be started as root permissions (with sudo)
--nginx config file has modules controlled by directives, which are divided into simple directives ending with ; and block directives surrounded by {}
--Serving files requires a server block (or multiple) inside of an http block with at least one location block
-http {
-    server {
-        location / {
-            root /usr/share/nginx/html/
-            index index.html
-    server { 
-        location /images/ {
-            root /usr/share/nginx/html/images
-            
-    }
-}
--After deciding which server to process request, nginx tests the URI specified in the request's header against parameters of location directive defined in server block
--URI is identifier of specific resource and URL is a specific type of identifier telling you how to access it (e.g. HTTPS, FTP) such as https://www.website.com. A URL is a URI but not all URIS are URLs
--The location block specifies '/' prefix compared with the URI from the request, and for matching request the URI will be added to the path specified inthe root directive (/usr/share/nginx/html/) to form the path to the requested file on the local file system
--In above example if request for http://localhost/images/example.png nginx will send the file, and if it doesn't exist nginx will send response indicating 404 error. Requests with URIS not stating /images/ will be mapped to the /sur/share/nginx/html/ directory
-
-
-rsync and cronie and cronie-runit
-$ sudo pacman -S rsync cronie cronie-runit
-$ sudo vim /etc/cron.hourly/rsync
-#!/bin/bash
-rsync -ahvP --delete /home/steve/ /mnt/usb/rsync/
-$ sudo chmod +x /etc/cron.hourly/rsync
-$ ln -s /
-
-df vs du???
--Check disk usage of directories/ like /home/steve/
-$ du -sh /home/steve
--s gives total size of specified folder
--h is human readable format
-
-zip/unzip stuff and quick usage 
-
-ln -s directory/file1 directory/file2
--Linking existing file1 to new file2 that will be created
--Can also link directories to directories:
-ln -s /home/steve directory
--This would link /home/steve to a created directory called 'directory'
--hard link by default, that's why you specify -s for symbolic or 'soft' link
--Any changes to either file is reflected in the other
--Can unlink the link
-unlink name_of_systemlink
--You can have broken links if the file/directory that the link points to changes path or is deleted
--If you get permission denied while trying to edit it you may have created a reference to itself, try going in the directory you're linking to and/or using full directory paths
-
--Official Artix Wiki Installation: https://wiki.artixlinux.org/Main/Installation
--Use 'man package' for package manuals
-
-xrandr:
--Set screen resolution and configure monitors as it's 'Resize and Rotate'  
-$ sudo pacman -S xorg-xrandr
--type
-$ xrandr
--It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
-
-Screen Brightness and Laptop Brightness Keys:
--xorg-xbacklight by itself wasn't working, so use 
-$ sudo pacman -S acpilight
--acpilight provides xorg-xbacklight so don't install it too, it is backwards compatible and uses ACPI interface to set display brightness 
--Place the following data in a created file /etc/udev/rules.d/90-backlight.rules. As you can see it allows members of wheel group to adjust the brightness file by changing its permissions to be writable by wheel group members:
-SUBSYSTEM=="backlight", ACTION=="add", \
-  RUN+="/bin/chgrp wheel /sys/class/backlight/intel_backlight/brightness", \
-  RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
--reboot to see changes
--Can adjust brightness between 0 and 100
-
--You can uninstall AUR packages normally, 
-$ sudo pacman -Rns 'package_name'
-
-Updating:
-****Make update command chain of 
-pacman -Syu
--Had issue with 'corrupted or invalid pgp signature' running archlinux-keyring, so refresh keys first
-$ sudo pacman-key --refresh-keys
-$ sudo pacman -S archlinux-keyring
-$ sudo pacman -Syu
-$ sudo pacdiff
-
-Before first update:
-pacman -S archlinux-keyring
--To go through .pacnew files after updating:
-sudo pacman -S pacman-contrib
--To run:
-sudo pacdiff
-
-windows/linux fs transfers
-sudo fdisk with 'o' at the start for dos
-sudo pacman -S dosfstools
-sudo mkfs.msdos -F 32 /dev/sdXX
-
-You should be able to get dos2unix from your package manager on Linux.
-If you are using a Debian-based distro, you should be able to do 
-sudo pacman -S dos2unix
-If you are using a RH-like distro, you should be able to do sudo yum install dos2unix.
-Once it is installed, you can just give the target file as an argument'
-dos2unix test.py
-Also, note that this may not be the only problem you might run into while trying to move a script to Linux from Windows.
-For example, if you are invoking any external tools in your script, those tools will probably have different names or not exist at all on the other platform.
-Also, if you are using any relative file paths with path separators, the separator is different on Linux (which uses /) than Windows (which uses \).
-
-interactive
-alias rm='rm -i'
-alias mv='mv -i'
-alias cp='cp -i'
-
--pacman:
--List orphan programs (dependencies of deleted program)
-$ sudo pacman -Qtdq
--Recursively delete orphans:
-$ sudo pacman -Rns $(pacman -Qtdq)
--To install a single package or list of packages, including dependencies, issue the following command:
-# pacman -S package_name1 package_name2 ...
--To remove a package and its dependencies which are not required by any other installed p ackage: 
-pacman -Rs package_name
--Pacman can update all packages on the system with just one command.The following command synchronizes the repository databases and updates the system's packages, excluding "local" packages that are not in the configured repositories:
-# pacman -Syu
--List all explicitly installed packages: 
-pacman -Qe.
-
-
-
-
-Installation:
-
--Verify ISO image signature when downloading from the HTTP mirror:
--SHA-256 checksum tool is called 'sha256sum'
-# sha256sum file_name 
--You can also use GnuPG to verify hash on an existing system:
+### You can also use GnuPG to verify hash on an existing system:
+```bash
 $ gpg --keyserver-options auto-key-retrieve --verify artixlinux-version-x86_64.iso.sig artixlinux-version-x86_64.iso
--Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (e.g. 0xB886B428)
--Make sure 'Good signature from "Name <email>" matches with that of someone on artix website under the 'Core Team' webpage
--If getting 'Warning not certified' then don't bother trying to mark key as valid it doesn't change anything, it's already verified
+```
+### Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (e.g. 0xB886B428)
+### Make sure 'Good signature from "Name <email>" matches with that of someone on artix website under the 'Core Team' webpage
+### If getting 'Warning not certified' then don't bother trying to mark key as valid it doesn't change anything, it's already verified
 
 ***USB stick must be formatted FAT32 to work on Windows AND Linux by default, as the Linux kernel only reads NTFS with extra packages installed
 -Make sure that USB is NOT mounted
@@ -409,5 +245,162 @@ chmod -R 777 directory/
 pacman modifications:
 -Pacman has a color option. Uncomment the 'Color' line in /etc/pacman.conf.
 -Also uncomment 'CheckSpace' and 'VerbosePkgLists'  
+
+
+
+
+
+-Auto Mount USB Stick: 
+```bash
+# /dev/sdb1 UUID=11834887-d9d9-4f74-b7b8-28428eb9f93a   /mnt/usb    ext4        defaults    0 0
+```
+-<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
+-<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
+
+
+
+nginx:
+$ sudo pacman -S nginx nginx-runit 
+-It's free open-source HTTP server/reverse proxy with low resource consumption
+-The default page served at http://127.0.0.1 is /usr/share/nginx/html/index.html
+-Main config file is /etc/nginx/nginx.conf
+-nginx has one master process and several worker processes, and the master process reads/evaluates configuration and maintains worker processes. Worker processes do actual processing of requests. nginx uses event-based model and OS-dependant mechanisms to distribute requests among worker processes
+-Must define number of worker processes as either fixed or automatically adjusted to the number of CPU cores
+-To start nginx, run executable file as sudo
+$ sudo nginx
+-Controls below should be implemented by same user that initiated nginx
+-Can be controlled with -s or signal flag:
+-s stop = fast shutdown
+-s quit = graceful shutdown allowing worker processes to finish serving current requests
+-s reload = reload config file
+-s reopen = reopening the log files
+-Once the master process (started by nginx init script) receives the signal to reload configuration, it checks the syntax validity of the new configuration file and tries to apply the configuration provided in it. If this is a success, the master process starts new worker processes and sends messages to old worker processes, requesting them to shut down. Otherwise, the master process rolls back the changes and continues to work with the old configuration. Old worker processes, receiving a command to shut down, stop accepting new connections and continue to service current requests until all such requests are serviced. After that, the old worker processes exit. 
+-By default running on port 80 accessed by 127.0.0.1 or 'http://localhost'
+-You will get file permission error trying to change nginx directory out of /usr/share/nginx and you should instead copy over the Website/ directory into /usr/share/nginx/html/ and it will be owned by root then and work properly, also you only have the 'working' version there so you can work on the other version without worry
+-Only root processes can listen to ports below 1024 like 80/443 so this is why nginx must be started as root permissions (with sudo)
+-nginx config file has modules controlled by directives, which are divided into simple directives ending with ; and block directives surrounded by {}
+-Serving files requires a server block (or multiple) inside of an http block with at least one location block
+http {
+    server {
+        location / {
+            root /usr/share/nginx/html/
+            index index.html
+    server { 
+        location /images/ {
+            root /usr/share/nginx/html/images
+            
+    }
+}
+-After deciding which server to process request, nginx tests the URI specified in the request's header against parameters of location directive defined in server block
+-URI is identifier of specific resource and URL is a specific type of identifier telling you how to access it (e.g. HTTPS, FTP) such as https://www.website.com. A URL is a URI but not all URIS are URLs
+-The location block specifies '/' prefix compared with the URI from the request, and for matching request the URI will be added to the path specified inthe root directive (/usr/share/nginx/html/) to form the path to the requested file on the local file system
+-In above example if request for http://localhost/images/example.png nginx will send the file, and if it doesn't exist nginx will send response indicating 404 error. Requests with URIS not stating /images/ will be mapped to the /sur/share/nginx/html/ directory
+
+
+rsync and cronie and cronie-runit
+$ sudo pacman -S rsync cronie cronie-runit
+$ sudo vim /etc/cron.hourly/rsync
+#!/bin/bash
+rsync -ahvP --delete /home/steve/ /mnt/usb/rsync/
+$ sudo chmod +x /etc/cron.hourly/rsync
+$ ln -s /
+
+df vs du???
+-Check disk usage of directories/ like /home/steve/
+$ du -sh /home/steve
+-s gives total size of specified folder
+-h is human readable format
+
+zip/unzip stuff and quick usage 
+
+ln -s directory/file1 directory/file2
+-Linking existing file1 to new file2 that will be created
+-Can also link directories to directories:
+ln -s /home/steve directory
+-This would link /home/steve to a created directory called 'directory'
+-hard link by default, that's why you specify -s for symbolic or 'soft' link
+-Any changes to either file is reflected in the other
+-Can unlink the link
+unlink name_of_systemlink
+-You can have broken links if the file/directory that the link points to changes path or is deleted
+-If you get permission denied while trying to edit it you may have created a reference to itself, try going in the directory you're linking to and/or using full directory paths
+
+-Official Artix Wiki Installation: https://wiki.artixlinux.org/Main/Installation
+-Use 'man package' for package manuals
+
+xrandr:
+-Set screen resolution and configure monitors as it's 'Resize and Rotate'  
+$ sudo pacman -S xorg-xrandr
+-type
+$ xrandr
+-It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
+
+Screen Brightness and Laptop Brightness Keys:
+-xorg-xbacklight by itself wasn't working, so use 
+$ sudo pacman -S acpilight
+-acpilight provides xorg-xbacklight so don't install it too, it is backwards compatible and uses ACPI interface to set display brightness 
+-Place the following data in a created file /etc/udev/rules.d/90-backlight.rules. As you can see it allows members of wheel group to adjust the brightness file by changing its permissions to be writable by wheel group members:
+SUBSYSTEM=="backlight", ACTION=="add", \
+  RUN+="/bin/chgrp wheel /sys/class/backlight/intel_backlight/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
+-reboot to see changes
+-Can adjust brightness between 0 and 100
+
+-You can uninstall AUR packages normally, 
+$ sudo pacman -Rns 'package_name'
+
+Updating:
+****Make update command chain of 
+pacman -Syu
+-Had issue with 'corrupted or invalid pgp signature' running archlinux-keyring, so refresh keys first
+$ sudo pacman-key --refresh-keys
+$ sudo pacman -S archlinux-keyring
+$ sudo pacman -Syu
+$ sudo pacdiff
+
+Before first update:
+pacman -S archlinux-keyring
+-To go through .pacnew files after updating:
+sudo pacman -S pacman-contrib
+-To run:
+sudo pacdiff
+
+windows/linux fs transfers
+sudo fdisk with 'o' at the start for dos
+sudo pacman -S dosfstools
+sudo mkfs.msdos -F 32 /dev/sdXX
+
+You should be able to get dos2unix from your package manager on Linux.
+If you are using a Debian-based distro, you should be able to do 
+sudo pacman -S dos2unix
+If you are using a RH-like distro, you should be able to do sudo yum install dos2unix.
+Once it is installed, you can just give the target file as an argument'
+dos2unix test.py
+Also, note that this may not be the only problem you might run into while trying to move a script to Linux from Windows.
+For example, if you are invoking any external tools in your script, those tools will probably have different names or not exist at all on the other platform.
+Also, if you are using any relative file paths with path separators, the separator is different on Linux (which uses /) than Windows (which uses \).
+
+interactive
+alias rm='rm -i'
+alias mv='mv -i'
+alias cp='cp -i'
+
+-pacman:
+-List orphan programs (dependencies of deleted program)
+$ sudo pacman -Qtdq
+-Recursively delete orphans:
+$ sudo pacman -Rns $(pacman -Qtdq)
+-To install a single package or list of packages, including dependencies, issue the following command:
+# pacman -S package_name1 package_name2 ...
+-To remove a package and its dependencies which are not required by any other installed p ackage: 
+pacman -Rs package_name
+-Pacman can update all packages on the system with just one command.The following command synchronizes the repository databases and updates the system's packages, excluding "local" packages that are not in the configured repositories:
+# pacman -Syu
+-List all explicitly installed packages: 
+pacman -Qe.
+
+
+
+
 
 
