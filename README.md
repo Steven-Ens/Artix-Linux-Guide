@@ -1,10 +1,26 @@
 Artix Linux Install Guide:
 
--auto mount usb stick: 
+-Auto Mount USB Stick: 
+```bash
 # /dev/sdb1 UUID=11834887-d9d9-4f74-b7b8-28428eb9f93a   /mnt/usb    ext4        defaults    0 0
-<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
-<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it
-should be 2, or 0 to disable checking.
+```
+-<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
+-<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 nginx:
 $ sudo pacman -S nginx nginx-runit 
@@ -74,11 +90,6 @@ unlink name_of_systemlink
 
 -Official Artix Wiki Installation: https://wiki.artixlinux.org/Main/Installation
 -Use 'man package' for package manuals
-
-solidity:
-sudo pacman -S solidity
--vim syntax highlighting:
-git clone https://github.com/TovarishFin/vim-solidity.git ~/.vim/pack/plugins/start/
 
 xrandr:
 -Set screen resolution and configure monitors as it's 'Resize and Rotate'  
