@@ -1,17 +1,23 @@
-# Artix Linux Installation Guide:
-* View the official guide: wiki.artixlinux.org/Main/Installation
+# Artix Linux Installation Guide
+* Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
-## Verify the ISO checksum after downloading from the HTTP mirror:
+## Verify the ISO Checksum:
+* Generate the SHA256 checksum:
 ```bash
-$ sha256sum file_name.iso
+$ sha256sum artix-base-runit-version-x86_64.iso
 ```
-* You can also use GnuPG to verify the hash on an existing system:
+* Compare the output against the SHA256 checksum listed on the official Artix download page.
+## Verify the ISO Signature
 ```bash
-$ gpg --keyserver-options auto-key-retrieve --verify artixlinux-version-x86_64.iso.sig artixlinux-version-x86_64.iso
+$ gpg --keyserver-options auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
-* Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (0xB886B428)
-* Make sure 'Good signature from "Name <email>" matches with that of someone on artix website under the 'Core Team' webpage
-* If getting 'Warning not certified' then don't bother trying to mark key as valid it doesn't change anything, it's already verified
+* Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428)
+* Ensure 'Good signature from "Name <email>"' matches with that of .........
+* You may see:
+```bash
+WARNING: This key is not certified with a trusted signature!
+```
+* This is normal on a fresh system and means the signing key is not yet trusted in your local GPG keyring.
 
 ***USB stick must be formatted FAT32 to work on Windows AND Linux by default, as the Linux kernel only reads NTFS with extra packages installed
 -Make sure that USB is NOT mounted
