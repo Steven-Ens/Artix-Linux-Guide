@@ -2,66 +2,96 @@
 * Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
 ## Verify the ISO Checksum:
-* Generate the SHA256 checksum:
 ```bash
 $ sha256sum artix-base-runit-version-x86_64.iso
 ```
-* Compare the output against the SHA256 checksum listed on the official Artix download page.
+* Compare the output against the SHA256 checksum listed on the official Artix download page (https://artixlinux.org/download.php).
 ## Verify the ISO Signature
 ```bash
 $ gpg --keyserver-options auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
-* Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428)
+* Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
 * Ensure 'Good signature from "Name <email>"' matches with that of .........
 * You may see:
 ```bash
 WARNING: This key is not certified with a trusted signature!
 ```
-* This is normal on a fresh system and means the signing key is not yet trusted in your local GPG keyring.
+* This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
+* As long as the key fingerprint matches the official Artix signing key and you see 'Good signature from...', verification succeeded.
 
-***USB stick must be formatted FAT32 to work on Windows AND Linux by default, as the Linux kernel only reads NTFS with extra packages installed
--Make sure that USB is NOT mounted
--Run the following command, replacing /dev/sdX with your drive letter and NOT appending a partition number
-# dd if=~/artixlinux.iso of=/dev/sdX bs=4M status=progress oflag=sync (conv=noerror) 
-if => INPUT FILE
-of => OUTPUT FILE
-bs => BYTES (Read and write up to BYTES bytes at a time)
-status=progress => Shows periodic transfer statistics
-oflag=sync => Synchronizes metadata
-conv=noerror => Program continues after reading errors, unlike the default 
+## Prepare the Installation Medium
+* Make sure that USB is NOT mounted.
+* Run the following command, replacing /dev/sdX with your drive and NOT appending a partition number:
+```bash
+$ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+* if → Input file
+* of → Output file
+* bs → Writes in 4 MiB chunks
+* status=progress → Shows transfer progress
+* conv=fsync → Flushes data before dd exits
 
--Live environment login:
-User: artix
-Password: artix
+## Check whether the installation medium was booted in UEFI mode
+```bash
+# cat /sys/firmware/efi/fw_platform_size
+```
+* If the command returns 64, the system is booted in UEFI mode and has a 64-bit x64 UEFI.
+* If it returns 'No such file or directory', the system may be booted in BIOS or CSM mode.
 
--Change to root user with the 'su' command:
-$ su
-
--Check if UEFI mode is enabled on the motherboard:
-# efivar --list
-
+## Partition the Disk
+* List the block devices and identify the target drive:
+```bash
 # lsblk
--UEFI partition layout with GPT: 
-	-/mnt/boot mount point /dev/sdX1 size (2GB)
-	-[SWAP] mount point /dev/sdX2 equal or double PC RAM (8-16GB)
-	-/mnt mount point /dev/sdX3 using the remainder of the device
-# fdisk /dev/sdX
+```
+* For a UEFI system, use a GPT partition table with the following layout: 
+	* /dev/sdX1 for EFI System (1GB)
+	* /dev/sdX2 for Linux swap (8-16GB)
+	* /dev/sdX3 for Linux filesystem (remainder of the device)
 
--Create FAT32 boot partition:
+* Open fdisk on the target drive and NOT a partition:
+```bash
+# fdisk /dev/sdX
+```
+* Inside fdisk:
+	* g → Create a new GPT partition table
+	* n → Create a new partition
+	* t → Change partition type
+	* w → Write changes to disk and exit
+* Verify your partitions:
+```bash
+# fdisk -l /dev/sdX
+```
+
+## Format the Partitions
+* Format the boot partition to FAT32:
+```bash
 # mkfs.fat -F 32 /dev/sdX1
--Make and turn on swap partition:
+```
+* Initialize and enable the swap partition:
+```bash
 # mkswap /dev/sdX2
 # swapon /dev/sdX2
--Format data partitions by making filesystems, and setting up a swap partition:
+```
+* Format the root partition as Ext4:
+```bash
 # mkfs.ext4 /dev/sdX3
+```
 
--Mount file systems on the root partition to the /mnt directory of the live system:
+## Mount the Partitions
+* Mount the root partition to /mnt:
+```bash
 # mount /dev/sdX3 /mnt
-# mkdir /mnt/boot
+```
+* Mount the EFI partition to /mnt/boot:
+```bash
+# mount --mkdir /dev/sdX1 /mnt/boot
+```
+* Create a separate mount point for usb devices /mnt/usb:
+```bash
 # mkdir /mnt/usb
-# mount /dev/sdX1 /mnt/boot
+```
 
--Check internet connection
+## Check Internet Connection
 # ip addr 
 # ping -c4 artixlinux.org
 
