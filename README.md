@@ -10,14 +10,13 @@ $ sha256sum artix-base-runit-version-x86_64.iso
 ```bash
 $ gpg --keyserver-options auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
-* Make sure 'Using RSA key' is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
-* Ensure 'Good signature from "Name <email>"' matches with that of .........
+* Make sure ```using RSA key``` is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
+* Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
 * You may see:
 ```bash
 WARNING: This key is not certified with a trusted signature!
 ```
 * This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
-* As long as the key fingerprint matches the official Artix signing key and you see 'Good signature from...', verification succeeded.
 
 ## Prepare the Installation Medium
 * Make sure that USB is NOT mounted.
@@ -30,6 +29,13 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 * bs → Writes in 4 MiB chunks
 * status=progress → Shows transfer progress
 * conv=fsync → Flushes data before dd exits
+
+## ThinkPad T440 UEFI Troubleshooting
+* On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
+* After resetting the BIOS to default settings, these boot options worked:
+	* ```Boot Mode: Both```
+	* ```Boot Priority: UEFI First```
+	* ```CSM Support: Yes (Automatic)```
 
 ## Check whether the installation medium was booted in UEFI mode
 ```bash
@@ -56,6 +62,9 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 	* g → Create a new GPT partition table
 	* n → Create a new partition
 	* t → Change partition type
+   		* 1 → EFI System
+       	* 19 → Linux swap
+       	* 20 → Linux filesystem
 	* w → Write changes to disk and exit
 * Verify your partitions:
 ```bash
@@ -90,10 +99,21 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```bash
 # mkdir /mnt/usb
 ```
+* To confirm your mount points:
+```bash
+# lsblk
+```
 
-## Check Internet Connection
+## Internet Connection
+* If using WiFi, connect to your network:
+```bash
+# nmtui
+```
+* Confirm the connection:
+```bash
 # ip addr 
 # ping -c4 artixlinux.org
+```
 
 -Update the live packages and install vim
 # pacman -Sy
