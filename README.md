@@ -8,7 +8,7 @@ $ sha256sum artix-base-runit-version-x86_64.iso
 * Compare the output against the SHA256 checksum listed on the official Artix download page (https://artixlinux.org/download.php).
 ## Verify the ISO Signature
 ```bash
-$ gpg --keyserver-options auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
+$ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
 * Make sure ```using RSA key``` is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
 * Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
@@ -19,16 +19,16 @@ WARNING: This key is not certified with a trusted signature!
 * This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
 
 ## Prepare the Installation Medium
-* Make sure that USB is NOT mounted.
+* Make sure that the USB is NOT mounted.
 * Run the following command, replacing /dev/sdX with your drive and NOT appending a partition number:
 ```bash
 $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
-* if → Input file
-* of → Output file
-* bs → Writes in 4 MiB chunks
-* status=progress → Shows transfer progress
-* conv=fsync → Flushes data before dd exits
+* ```if``` → Input file
+* ```of``` → Output file
+* ```bs``` → Writes in 4 MiB chunks
+* ```status=progress``` → Shows transfer progress
+* ```conv=fsync``` → Flushes data before dd exits
 
 ## ThinkPad T440 UEFI Troubleshooting
 * On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
@@ -64,12 +64,24 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 	* t → Change partition type
    		* 1 → EFI System
        	* 19 → Linux swap
-       	* 20 → Linux filesystem
+       	* 20 → Linux filesystem (Default)
 	* w → Write changes to disk and exit
 * Verify your partitions:
 ```bash
 # fdisk -l /dev/sdX
 ```
+
+# Encrypt /dev/sdX3 with LUKS
+* Create encrypted container:
+```bash
+# cryptsetup luksFormat /dev/sdX3
+```
+* Type ```YES``` and enter passphrase.
+* Next, unlock the encrypted partition:
+```bash
+# cryptsetup open /dev/sda3 cryptroot
+```
+* This creates ```/dev/mapper/cryptroot```
 
 ## Format the Partitions
 * Format the boot partition to FAT32:
@@ -81,15 +93,15 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 # mkswap /dev/sdX2
 # swapon /dev/sdX2
 ```
-* Format the root partition as Ext4:
+* Format the encrypted root partition:
 ```bash
-# mkfs.ext4 /dev/sdX3
+# mkfs.ext4 /dev/mapper/cryptroot
 ```
 
-## Mount the Partitions
-* Mount the root partition to /mnt:
+## Mount the Filesystems
+* Mount the encrypted root partition to /mnt:
 ```bash
-# mount /dev/sdX3 /mnt
+# mount /dev/mapper/cryptroot /mnt
 ```
 * Mount the EFI partition to /mnt/boot:
 ```bash
@@ -115,18 +127,15 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 # ping -c4 artixlinux.org
 ```
 
--Update the live packages and install vim
-# pacman -Sy
-# pacman -S vim
-
-Packages to be installed must be downloaded from mirror servers, which are defined in /etc/pacman.d/mirrorlist for
-Artix. On the live system, all Archlinux mirrors are enabled, and sorted by their synchronization status and speed at the time the installation image was created. This file will later be copied to the new system by basestrap, so it is worth getting right.
+* Mirror services are defined in /etc/pacman.d/mirrorlist, ensure the ones on the top are closest to you geographically:
+```bash
 # vim /etc/pacman.d/mirrorlist
-Server = https://csclub
+```
 
--Install Packages
-# basestrap /mnt base base-devel runit elogind-runit linux linux-firmware vim
-
+* Install the base system:
+```
+# basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware vim
+```
 -Generate File System Table
 # fstabgen -U /mnt >> /mnt/etc/fstab
 # cat /mnt/etc/fstab
@@ -170,7 +179,8 @@ rEFInd:
 -Now rEFInd should have a boot entry for your kernel, but it will not pass the correct kernel parameters. For automatically detected kernels you can specify the kernel parameters explicitly in /boot/refind_linux.conf:
 # vim /boot/refind_linux.conf
 -Type the following, changing the UUID for your current /dev/sda3 UUID:
-"Boot with standard options" "ro root=UUID=d7428212-b1be-4fc7-b52e-d7aa1d1b1eee"
+"Boot with standard options" "ro root=UUID=d7428212-b
+1be-4fc7-b52e-d7aa1d1b1eee"
 -Copy the config file to /boot/EFI/refind/refind.conf:
 # cp /usr/share/refind/refind.conf-sample /boot/EFI/refind/refind.conf
 -Change 'timeout' to -1 seconds to automatically start the kernel, and uncomment 'textonly' to remove the pointless icons. You should now be able to boot your kernel using rEFInd
