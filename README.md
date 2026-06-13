@@ -1,19 +1,26 @@
 # Artix Linux Installation Guide
 * Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
-## Verify the ISO Checksum:
-```bash
+## What This Guide Provides
+* This guide implements the following:
+	* rEFInd
+   	* runit
+ 	* LUKS
+    * 
+
+## Verify the ISO Checksum
+```
 $ sha256sum artix-base-runit-version-x86_64.iso
 ```
-* Compare the output against the SHA256 checksum listed on the official Artix download page (https://artixlinux.org/download.php).
+* Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
 ## Verify the ISO Signature
-```bash
+```
 $ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
 * Make sure ```using RSA key``` is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
 * Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
 * You may see:
-```bash
+```
 WARNING: This key is not certified with a trusted signature!
 ```
 * This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
@@ -21,7 +28,7 @@ WARNING: This key is not certified with a trusted signature!
 ## Prepare the Installation Medium
 * Make sure that the USB is NOT mounted.
 * Run the following command, replacing /dev/sdX with your drive and NOT appending a partition number:
-```bash
+```
 $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 * ```if``` → Input file
@@ -37,25 +44,25 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 	* ```Boot Priority: UEFI First```
 	* ```CSM Support: Yes (Automatic)```
 
-## Check whether the installation medium was booted in UEFI mode
-```bash
+## Check Whether the Installation Medium was Booted in UEFI Mode
+```
 # cat /sys/firmware/efi/fw_platform_size
 ```
 * If the command returns 64, the system is booted in UEFI mode and has a 64-bit x64 UEFI.
-* If it returns 'No such file or directory', the system may be booted in BIOS or CSM mode.
+* If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
 
 ## Partition the Disk
 * List the block devices and identify the target drive:
-```bash
+```
 # lsblk
 ```
 * For a UEFI system, use a GPT partition table with the following layout: 
 	* /dev/sdX1 for EFI System (1GB)
 	* /dev/sdX2 for Linux swap (8-16GB)
-	* /dev/sdX3 for Linux filesystem (remainder of the device)
+	* /dev/sdX3 for Linux filesystem (remaining space)
 
-* Open fdisk on the target drive and NOT a partition:
-```bash
+* Open fdisk on the target drive and NOT adding a partition:
+```
 # fdisk /dev/sdX
 ```
 * Inside fdisk:
@@ -67,108 +74,142 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
        	* 20 → Linux filesystem (Default)
 	* w → Write changes to disk and exit
 * Verify your partitions:
-```bash
+```
 # fdisk -l /dev/sdX
 ```
 
-# Encrypt /dev/sdX3 with LUKS
+## Encrypt /dev/sdX3 with LUKS
 * Create encrypted container:
-```bash
+```
 # cryptsetup luksFormat /dev/sdX3
 ```
-* Type ```YES``` and enter passphrase.
-* Next, unlock the encrypted partition:
-```bash
+* Type ```YES``` and enter your passphrase.
+* Unlock the encrypted partition:
+```
 # cryptsetup open /dev/sda3 cryptroot
 ```
 * This creates ```/dev/mapper/cryptroot```
 
 ## Format the Partitions
 * Format the boot partition to FAT32:
-```bash
+```
 # mkfs.fat -F 32 /dev/sdX1
 ```
 * Initialize and enable the swap partition:
-```bash
+```
 # mkswap /dev/sdX2
 # swapon /dev/sdX2
 ```
 * Format the encrypted root partition:
-```bash
+```
 # mkfs.ext4 /dev/mapper/cryptroot
 ```
 
 ## Mount the Filesystems
 * Mount the encrypted root partition to /mnt:
-```bash
+```
 # mount /dev/mapper/cryptroot /mnt
 ```
 * Mount the EFI partition to /mnt/boot:
-```bash
+```
 # mount --mkdir /dev/sdX1 /mnt/boot
 ```
 * Create a separate mount point for usb devices /mnt/usb:
-```bash
+```
 # mkdir /mnt/usb
 ```
 * To confirm your mount points:
-```bash
+```
 # lsblk
 ```
 
 ## Internet Connection
 * If using WiFi, connect to your network:
-```bash
+```
 # nmtui
 ```
 * Confirm the connection:
-```bash
+```
 # ip addr 
 # ping -c4 artixlinux.org
 ```
 
+## Select the Mirrors
 * Mirror services are defined in /etc/pacman.d/mirrorlist, ensure the ones on the top are closest to you geographically:
-```bash
+```
 # vim /etc/pacman.d/mirrorlist
 ```
 
-* Install the base system:
+## Install the Base System
 ```
-# basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware vim
+# basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware vim cryptsetup 
 ```
--Generate File System Table
+
+## Generate the File System Table
+```
 # fstabgen -U /mnt >> /mnt/etc/fstab
+```
+* Check that it succeeded:
+```
 # cat /mnt/etc/fstab
+```
 
--Change root (chroot) into the new system:
+## Change root (chroot) into the New System
+```
 # artix-chroot /mnt /bin/bash
+```
 
--Use ntpd to ensure the system clock is updated and accurate: 
+## Configure mkinitcpio for LUKS Encryption
+```
+vim /etc/mkinitcpio.conf
+```
+Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesystems```:
+```
+# HOOKS=(
+```
+* Rebuild initramfs:
+```
+# mkinitcpio -P
+```
+
+## Update the System Clock
+```
 # pacman -S ntp
 # ntpd -qg
--q =>
--g =>
+```
+* ```q``` →
+* ```g``` →
 
-Time zone
-Set the time zone:
-# ln -sf /usr/share/zoneinfo/America/Toronto /etc/localtime
+## Set the Time Zone:
+```
+# ln -sf /usr/share/zoneinfo/Canada/Pacific /etc/localtime
+```
 
-Run hwclock(8) to generate /etc/adjtime:
+## Run hwclock to Generate /etc/adjtime:
+```
 # hwclock --systohc
---systohc => 
+```
+* ```systohc``` →
 
-Uncomment en_US.UTF-8 UTF-8 in /etc/locale.gen
+## Uncomment en_US.UTF-8 UTF-8 in /etc/locale.gen
+```
 # vim /etc/locale.gen
--Save and quit the file, and generate new location:
+```
+* Generate new location:
+```
 # locale-gen
--Now set system locale:
+```
+*Set the system locale:
+```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
--To check if the locale-gen worked, locale -a should output what you uncommented
-$ locale -a 
--Locales: are used by glibc (GNU C Library) and other locale-aware programs or libraries for rendering text, correctly displaying regional monetary values, time and date formats, alphabetic idiosyncrasies, and other locale-specific standards.
+```
+* Check if it worked:
+```
+# locale -a
+```
 
 rEFInd:
-# pacman -S refind
+pacman -S refind
 -First, copy the executable to the ESP (EFI System Partition):
 # mkdir -p /boot/EFI/refind
 -p => parents, where it creates the parent directories as needed
@@ -176,11 +217,7 @@ rEFInd:
 -Then use efibootmgr to create a boot entry in the UEFI NVRAM, where /dev/sdX and Y are the device and partition number of your EFI system partition. 
 # efibootmgr --create --disk /dev/sdX --part Y --loader /EFI/refind/refind_x64.efi --label "rEFInd Boot Manager" --verbose
 -Make sure from the output that the boot entry 'rEFInd Boot Manager' was created
--Now rEFInd should have a boot entry for your kernel, but it will not pass the correct kernel parameters. For automatically detected kernels you can specify the kernel parameters explicitly in /boot/refind_linux.conf:
-# vim /boot/refind_linux.conf
--Type the following, changing the UUID for your current /dev/sda3 UUID:
-"Boot with standard options" "ro root=UUID=d7428212-b
-1be-4fc7-b52e-d7aa1d1b1eee"
+-Now rEFInd should have a boot entry for your kernel, but it will not pass the correct kernel parameters. 
 -Copy the config file to /boot/EFI/refind/refind.conf:
 # cp /usr/share/refind/refind.conf-sample /boot/EFI/refind/refind.conf
 -Change 'timeout' to -1 seconds to automatically start the kernel, and uncomment 'textonly' to remove the pointless icons. You should now be able to boot your kernel using rEFInd
@@ -188,6 +225,16 @@ rEFInd:
 -I run this after just to make sure it all works
 # refind-install
 This will attempt to find and mount your ESP, copy rEFInd files to esp/EFI/refind/, and use efibootmgr to make rEFInd the default EFI boot application.
+
+
+## Configure rEFInd Boot Options
+```
+# blkid -s UUID -o value /dev/sda3 >> /boot/refind_linux.conf
+```
+* Add the following line to the top of /boot/refind_linux.conf using the copied written UUID:
+```
+"Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
+```
 
 Get most recent microcode for processor
 #pacman -S intel-ucode
@@ -205,6 +252,7 @@ service status: $ sudo status service name
 List all running services: $ sudo sv status /run/runit/service/*
 
 -Network Manager:
+networkmanager networkmanager-runit 
 -If you don't get wifi when rebooted, sometimes you have to do the link command below again
 pacman -S networkmanager networkmanager-runit
 -Autostart runit scripts:
