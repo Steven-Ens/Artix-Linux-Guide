@@ -86,7 +86,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 * Type ```YES``` and enter your passphrase.
 * Unlock the encrypted partition:
 ```
-# cryptsetup open /dev/sda3 cryptroot
+# cryptsetup open /dev/sdX3 cryptroot
 ```
 * This creates ```/dev/mapper/cryptroot```
 
@@ -100,17 +100,17 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 # mkswap /dev/sdX2
 # swapon /dev/sdX2
 ```
-* Format the encrypted root partition:
+* Format the unlocked encrypted root partition:
 ```
 # mkfs.ext4 /dev/mapper/cryptroot
 ```
 
 ## Mount the Filesystems
-* Mount the encrypted root partition to /mnt:
+* Mount the encrypted root filesystem to /mnt:
 ```
 # mount /dev/mapper/cryptroot /mnt
 ```
-* Mount the EFI partition to /mnt/boot:
+* Mount the EFI filesystem to /mnt/boot:
 ```
 # mount --mkdir /dev/sdX1 /mnt/boot
 ```
@@ -159,6 +159,15 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 # artix-chroot /mnt /bin/bash
 ```
 
+* Get most recent microcode for your processor:
+```
+# pacman -S intel-ucode
+```
+* Or
+```
+# pacman -S amd-ucode
+```
+
 ## Configure mkinitcpio for LUKS Encryption
 ```
 vim /etc/mkinitcpio.conf
@@ -177,8 +186,8 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # pacman -S ntp
 # ntpd -qg
 ```
-* ```q``` →
-* ```g``` →
+* ```q``` → Quit after syncing once
+* ```g``` → Allow a large initial time correction
 
 ## Set the Time Zone:
 ```
@@ -189,9 +198,12 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 # hwclock --systohc
 ```
-* ```systohc``` →
+* ```sys``` → System clock
+* ```to```
+* ```hc``` → Hardware clock
 
-## Uncomment en_US.UTF-8 UTF-8 in /etc/locale.gen
+## Configure locale
+* Uncomment en_US.UTF-8 and UTF-8 in /etc/locale.gen:
 ```
 # vim /etc/locale.gen
 ```
@@ -199,7 +211,7 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 # locale-gen
 ```
-*Set the system locale:
+* Set the system locale:
 ```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
@@ -208,85 +220,131 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # locale -a
 ```
 
-rEFInd:
-pacman -S refind
--First, copy the executable to the ESP (EFI System Partition):
+## Configure rEFInd:
+```
+# pacman -S refind
+```
+* Copy the executable to the EFI System Partition (ESP):
+```
 # mkdir -p /boot/EFI/refind
--p => parents, where it creates the parent directories as needed
 # cp /usr/share/refind/refind_x64.efi /boot/EFI/refind/
--Then use efibootmgr to create a boot entry in the UEFI NVRAM, where /dev/sdX and Y are the device and partition number of your EFI system partition. 
+```
+* Use efibootmgr to create a boot entry in the UEFI NVRAM (where /dev/sdX and Y are the device and partition number of your ESP):
+```
 # efibootmgr --create --disk /dev/sdX --part Y --loader /EFI/refind/refind_x64.efi --label "rEFInd Boot Manager" --verbose
--Make sure from the output that the boot entry 'rEFInd Boot Manager' was created
--Now rEFInd should have a boot entry for your kernel, but it will not pass the correct kernel parameters. 
--Copy the config file to /boot/EFI/refind/refind.conf:
+```
+* Confirm from the output that the boot entry 'rEFInd Boot Manager' was created.
+```
 # cp /usr/share/refind/refind.conf-sample /boot/EFI/refind/refind.conf
--Change 'timeout' to -1 seconds to automatically start the kernel, and uncomment 'textonly' to remove the pointless icons. You should now be able to boot your kernel using rEFInd
--The rEFInd package includes the refind-install script to simplify the process of setting rEFInd as your default EFI boot entry. The script has several options for handling differing setups and UEFI implementations. See refind-install(8) or read the comments in the install script for explanations of the various installation options. For many systems it should be sufficient to simply run:
--I run this after just to make sure it all works
-# refind-install
-This will attempt to find and mount your ESP, copy rEFInd files to esp/EFI/refind/, and use efibootmgr to make rEFInd the default EFI boot application.
-
-
-## Configure rEFInd Boot Options
 ```
-# blkid -s UUID -o value /dev/sda3 >> /boot/refind_linux.conf
+* Change ```timeout``` to ```-1``` seconds to automatically start the kernel.
+* Uncomment ```textonly``` to remove the icons.
 ```
-* Add the following line to the top of /boot/refind_linux.conf using the copied written UUID:
+# vim /boot/EFI/refind/refind.conf
+```
+* Configure refind_linux.conf to pass the correct LUKS boot options, starting with the UUID of /dev/sdX3:
+```
+# blkid -s UUID -o value /dev/sdX3 >> /boot/refind_linux.conf
+```
+* Add the following line to the top of /boot/refind_linux.conf using the UUID of /dev/sdX3:
 ```
 "Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
-Get most recent microcode for processor
-#pacman -S intel-ucode
-OR
-#pacman -S amd-ucode
+## runit:
+* Create /run/runit/service/ as this is where artix stores its service directory 
+* Enable a service:
+```
+# ln -s /etc/runis/sv/service_name /run/runit/service/
+```
+* Disable a service for the next boot:
+```
+# rm /run/runit/service/
+```
+* Start a service:
+```
+# sv up service
+```
+* Stop a service (it still starts on the next boot):
+```
+# sv down service
+```
+* Restart a service:
+```
+# sv restart service
+```
+* Service status:
+```
+# status service
+```
+* List all running services:
+```
+# sv status /run/runit/service/*
+```
 
-runit:
--need to create /run/runit/service/ as this is where artix stores its service directory 
-enabling service: $ sudo ln -s /etc/runis/sv/service_name /run/runit/service/
-disable service for next boot: $ sudo rm /run/runit/service/
-stop service (still starts on next boot): $ sudo sv down service_name
-start service: $ sudo sv up service_name
-restart service: $ sudo sv restart service_name
-service status: $ sudo status service name
-List all running services: $ sudo sv status /run/runit/service/*
-
--Network Manager:
-networkmanager networkmanager-runit 
--If you don't get wifi when rebooted, sometimes you have to do the link command below again
-pacman -S networkmanager networkmanager-runit
--Autostart runit scripts:
+## Network Manager
+* Install:
+```
+# pacman -S networkmanager networkmanager-runit
+```
+* Autostart with runit:
+```
 # ln -s /etc/runit/sv/NetworkManager/ /run/runit/service/
+```
+## Set hostname
+```
+# echo hostname > /etc/hostname
+```
 
--Set hostname
-echo hostname > /etc/hostname
-
-root passwd:
+# Set root Password
+```
 # passwd
+```
 
-Add user:
-# useradd -m -g wheel user_name
-# passwd user_name 
+# Add New User 
+* Add user to the wheel group:
+```
+# useradd -m -G wheel user
+```
+* ```m``` → Create home directory
+* ```g``` → Add supplementary groups
+* Set password:
+```
+# passwd user
+``` 
 
-Add user to sudoers:
+## Add User to sudoers
+* Give wheel group sudo permissions:
+```
 # vim /etc/sudoers
-root ALL=(ALL:ALL) ALL
-user_name ALL=(ALL:ALL) ALL
+```
+* Uncomment ```%wheel ALL=(ALL:ALL) ALL```
 
-pacman -Syu 
+## Update System
+```
+# pacman -Syu
+``` 
+*```S``` → Sync and install packages
+*```y``` → Refresh package database
+*```u``` → Upgrade all installed packages
 
-Now, you can reboot and enter into your new installation:
-<- exit chroot environment 
-# exit                           
+## Reboot
+* Exit the chroot environment:
+```
+# exit
+```
+* Recursively unmount /mnt and reboot:
+```                         
 # umount -R /mnt
 # reboot
+```
 
 -Install xorg:
 $ sudo pacman -S xorg-server xorg-xinit xorg-xset
 -Install i3wm:
 $ sudo pacman -S i3 (choose i3-wm, i3status and i3lock) 
 -Install a font and terminal manager (urxvt default not 256 colours it seems):
-$ sudo pacman -S ttf-dejavu rxvt-unicode
+$ sudo pacman -S ttf-dejavu rxvt-unicode (numlockx thing?)
 
 Dotfiles
 .xinitrc
