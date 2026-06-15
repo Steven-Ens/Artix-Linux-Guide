@@ -3,21 +3,22 @@
 
 ## What This Guide Provides
 * This guide implements the following:
-	* rEFInd
-   	* runit
- 	* LUKS
-    * 
+	* GPT + UEFI installation
+    * rEFInd boot manager
+    * runit init system
+    * LUKS-encrypted root partition
 
 ## Verify the ISO Checksum
 ```
 $ sha256sum artix-base-runit-version-x86_64.iso
 ```
 * Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
+  
 ## Verify the ISO Signature
 ```
 $ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
 ```
-* Make sure ```using RSA key``` is the key specified on the website under 'Official ISO Images' (eg. 0xB886B428).
+* Make sure the RSA key is the key specified on the Artix website under 'Official ISO Images' (eg. ```0xB886B428```).
 * Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
 * You may see:
 ```
@@ -26,8 +27,8 @@ WARNING: This key is not certified with a trusted signature!
 * This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
 
 ## Prepare the Installation Medium
-* Make sure that the USB is NOT mounted.
-* Run the following command, replacing /dev/sdX with your drive and NOT appending a partition number:
+* Make sure that the USB is not mounted.
+* Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvme0nX```) with your drive and not appending a partition number:
 ```
 $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
@@ -37,49 +38,49 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 * ```status=progress``` → Shows transfer progress
 * ```conv=fsync``` → Flushes data before dd exits
 
-## ThinkPad T440 UEFI Troubleshooting
-* On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
-* After resetting the BIOS to default settings, these boot options worked:
-	* ```Boot Mode: Both```
-	* ```Boot Priority: UEFI First```
-	* ```CSM Support: Yes (Automatic)```
-
-## Check Whether the Installation Medium was Booted in UEFI Mode
+## Verify the Installation Medium was Booted in UEFI Mode
 ```
 # cat /sys/firmware/efi/fw_platform_size
 ```
 * If the command returns 64, the system is booted in UEFI mode and has a 64-bit x64 UEFI.
 * If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
 
+## ThinkPad T440 UEFI Troubleshooting
+* On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
+* After resetting the BIOS to default settings, these boot options worked:
+	* ```Boot Mode: Both```
+	* ```Boot Priority: UEFI First```
+	* ```CSM Support: Yes``` (Automatic)
+
 ## Partition the Disk
-* List the block devices and identify the target drive:
+* List the block devices and identify the target drive ```/dev/sdX```:
 ```
 # lsblk
 ```
 * For a UEFI system, use a GPT partition table with the following layout: 
 	* /dev/sdX1 for EFI System (1GB)
 	* /dev/sdX2 for Linux swap (8-16GB)
-	* /dev/sdX3 for Linux filesystem (remaining space)
+	* /dev/sdX3 for Linux filesystem (Remaining space)
 
-* Open fdisk on the target drive and NOT adding a partition:
+* Open fdisk on the target drive, not adding a partition number:
 ```
 # fdisk /dev/sdX
 ```
 * Inside fdisk:
-	* g → Create a new GPT partition table
-	* n → Create a new partition
-	* t → Change partition type
-   		* 1 → EFI System
-       	* 19 → Linux swap
-       	* 20 → Linux filesystem (Default)
-	* w → Write changes to disk and exit
+	* ```g``` → Create a new GPT partition table
+	* ```n``` → Create a new partition
+	* ```t``` → Change partition type
+   		* ```1``` → EFI System
+       	* ```19``` → Linux swap
+       	* ```20``` → Linux filesystem (Default)
+	* ```w``` → Write changes to disk and exit
 * Verify your partitions:
 ```
 # fdisk -l /dev/sdX
 ```
 
 ## Encrypt /dev/sdX3 with LUKS
-* Create encrypted container:
+* Create the encrypted container:
 ```
 # cryptsetup luksFormat /dev/sdX3
 ```
@@ -118,12 +119,12 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 # mkdir /mnt/usb
 ```
-* To confirm your mount points:
+* Confirm the mount points:
 ```
 # lsblk
 ```
 
-## Internet Connection
+## Setup Internet Connection
 * If using WiFi, connect to your network:
 ```
 # nmtui
@@ -135,7 +136,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 
 ## Select the Mirrors
-* Mirror services are defined in /etc/pacman.d/mirrorlist, ensure the ones on the top are closest to you geographically:
+* Mirrors are defined in /etc/pacman.d/mirrorlist, ensure the ones on the top are closest to you geographically:
 ```
 # vim /etc/pacman.d/mirrorlist
 ```
@@ -149,21 +150,22 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 # fstabgen -U /mnt >> /mnt/etc/fstab
 ```
-* Check that it succeeded:
+* ```U``` → Use UUIDs instead of device names.
+* Confirm:
 ```
 # cat /mnt/etc/fstab
 ```
 
-## Change root (chroot) into the New System
+## chroot into the New System
 ```
 # artix-chroot /mnt /bin/bash
 ```
 
-* Get most recent microcode for your processor:
+## Install microcode:
 ```
 # pacman -S intel-ucode
 ```
-* Or
+* Or:
 ```
 # pacman -S amd-ucode
 ```
@@ -172,9 +174,11 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 vim /etc/mkinitcpio.conf
 ```
-Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesystems```:
+* Find the uncommented ```HOOKS=(...)```:
+* Add ```encrypt``` before ```filesystems```
+* Remove ```consolefonts```
 ```
-# HOOKS=(
+HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt filesystems fsck)
 ```
 * Rebuild initramfs:
 ```
@@ -199,15 +203,15 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # hwclock --systohc
 ```
 * ```sys``` → System clock
-* ```to```
+* ```to``` → To
 * ```hc``` → Hardware clock
 
-## Configure locale
-* Uncomment en_US.UTF-8 and UTF-8 in /etc/locale.gen:
+## Localization
+* Uncomment ```en_US.UTF-8 UTF-8``` and ```en_US ISO-8859-1``` in /etc/locale.gen:
 ```
 # vim /etc/locale.gen
 ```
-* Generate new location:
+* Generate locales:
 ```
 # locale-gen
 ```
@@ -215,7 +219,7 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
-* Check if it worked:
+* Confirm:
 ```
 # locale -a
 ```
@@ -229,11 +233,12 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # mkdir -p /boot/EFI/refind
 # cp /usr/share/refind/refind_x64.efi /boot/EFI/refind/
 ```
-* Use efibootmgr to create a boot entry in the UEFI NVRAM (where /dev/sdX and Y are the device and partition number of your ESP):
+* Use efibootmgr to create a boot entry in the UEFI NVRAM where ```/dev/sdX``` and ```Y``` are the device and partition number of your ESP:
 ```
-# efibootmgr --create --disk /dev/sdX --part Y --loader /EFI/refind/refind_x64.efi --label "rEFInd Boot Manager" --verbose
+# efibootmgr --create --disk /dev/sdX --part Y --loader /EFI/refind/refind_x64.efi --label "rEFInd Boot Manager" --unicode
 ```
 * Confirm from the output that the boot entry 'rEFInd Boot Manager' was created.
+* Copy the config template:
 ```
 # cp /usr/share/refind/refind.conf-sample /boot/EFI/refind/refind.conf
 ```
@@ -242,48 +247,22 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 # vim /boot/EFI/refind/refind.conf
 ```
-* Configure refind_linux.conf to pass the correct LUKS boot options, starting with the UUID of /dev/sdX3:
+* Configure refind_linux.conf to pass the correct LUKS boot options, starting with the UUID of ```/dev/sdX3```:
 ```
 # blkid -s UUID -o value /dev/sdX3 >> /boot/refind_linux.conf
 ```
-* Add the following line to the top of /boot/refind_linux.conf using the UUID of /dev/sdX3:
+* Add the following line to the top of ```/boot/refind_linux.conf``` using the UUID of ```/dev/sdX3```:
 ```
 "Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
 ## runit:
-* Create /run/runit/service/ as this is where artix stores its service directory 
-* Enable a service:
+* Create ```/run/runit/service/``` as this is where runit stores its service directory:
 ```
-# ln -s /etc/runis/sv/service_name /run/runit/service/
-```
-* Disable a service for the next boot:
-```
-# rm /run/runit/service/
-```
-* Start a service:
-```
-# sv up service
-```
-* Stop a service (it still starts on the next boot):
-```
-# sv down service
-```
-* Restart a service:
-```
-# sv restart service
-```
-* Service status:
-```
-# status service
-```
-* List all running services:
-```
-# sv status /run/runit/service/*
+# mkdir /run/runit/service
 ```
 
-## Network Manager
-* Install:
+## Install Network Manager
 ```
 # pacman -S networkmanager networkmanager-runit
 ```
@@ -291,6 +270,7 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 # ln -s /etc/runit/sv/NetworkManager/ /run/runit/service/
 ```
+
 ## Set hostname
 ```
 # echo hostname > /etc/hostname
@@ -307,7 +287,7 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # useradd -m -G wheel user
 ```
 * ```m``` → Create home directory
-* ```g``` → Add supplementary groups
+* ```G``` → Add supplementary groups
 * Set password:
 ```
 # passwd user
@@ -320,13 +300,24 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 ```
 * Uncomment ```%wheel ALL=(ALL:ALL) ALL```
 
-## Update System
+## Initialize Pacman Keys
+```
+# pacman-key --init
+```
+* ```--init``` → Creates the local pacman GPG keyring used to verify package signatures
+```
+# pacman-key --populate artix
+```
+* ```--populate``` → Imports the trusted Artix package signing keys into pacman's keyring
+* ```artix``` → Uses the Artix keyring only
+  
+## Update the System
 ```
 # pacman -Syu
-``` 
-*```S``` → Sync and install packages
-*```y``` → Refresh package database
-*```u``` → Upgrade all installed packages
+```
+* ```S``` → Sync and install packages
+* ```y``` → Refresh package database
+* ```u``` → Upgrade all installed packages
 
 ## Reboot
 * Exit the chroot environment:
@@ -339,24 +330,39 @@ Find the uncommented ```HOOKS=(...)``` and add ```encrypt``` before ```filesyste
 # reboot
 ```
 
--Install xorg:
+## Install the Terminal
+```
+$ sudo pacman -S rxvt-unicode 
+```
+
+## Install the System Font
+```
+$ sudo pacman -S ttf-dejavu
+```
+
+## Install xorg:
+```
 $ sudo pacman -S xorg-server xorg-xinit xorg-xset
--Install i3wm:
-$ sudo pacman -S i3 (choose i3-wm, i3status and i3lock) 
--Install a font and terminal manager (urxvt default not 256 colours it seems):
-$ sudo pacman -S ttf-dejavu rxvt-unicode (numlockx thing?)
+```
 
-Dotfiles
-.xinitrc
-exec i3
+## Innstall i3wm:
+* Select ```i3-wm```, ```i3status``` and ```i3lock```:
+```
+$ sudo pacman -S i3 
+```
 
--Install man and git:
+## Install man and git
+```
 $ sudo pacman -S man git
+```
 
-Install firefox
+## Install firefox
+```
 $ sudo pacman -S firefox
+```
 
-ufw
+## Install ufw
+```
 sudo pacman -S ufw ufw-runit
 sudo ln -s /etc/runit/sv/ufw /run/runit/service/
 $ sudo ufw default allow outgoing
@@ -365,6 +371,50 @@ $ sudo ufw enable
 to check use
 $ sudo ufw status verbose
 make sure it's active
+
+## Private Internet Access VPN
+
+## Download Dotfiles
+```
+$ git clone https://github/com/Steven-Ens/Dotfiles .
+```
+* Copy files to their locations.
+
+
+## Using runit:
+* Enable a service:
+```
+# ln -s /etc/runit/sv/<service> /run/runit/service/
+```
+* Disable a service for the next boot:
+```
+# rm -f /run/runit/service/
+```
+* Start a service:
+```
+# sv up service
+```
+* Stop a service (it still starts on the next boot):
+```
+# sv down service
+```
+* Restart a service:
+```
+# sv restart service
+```
+* Service status:
+```
+# sv status service
+```
+* List all running services:
+```
+# sv status /run/runit/service/*
+```
+
+
+
+
+
 
 OpenSSH:
 # pacman -S openssh openssh-runit
@@ -419,7 +469,31 @@ pacman modifications:
 -Pacman has a color option. Uncomment the 'Color' line in /etc/pacman.conf.
 -Also uncomment 'CheckSpace' and 'VerbosePkgLists'  
 
+-Managing .pacnew files after an update:
+$ sudo pacman -S pacman-contrib
+$ sudo pacdiff
+-View changes between files and either override or delete the .pacnew file
 
+-pacman: 
+-List orphan programs (dependencies of deleted program)
+$ sudo pacman -Qtdq
+-Recursively delete orphans:
+$ sudo pacman -Rns $(pacman -Qtdq)
+-To install a single package or list of packages, including dependencies, issue the following command:
+# pacman -S package_name1 package_name2 ...
+-To remove a single package, leaving all of its dependencies installed:
+# pacman -R package_name
+-To remove a package and its dependencies which are not required by any other installed package:
+# pacman -Rs package_name
+-Pacman can update all packages on the system with just one command. This could take quite a while depending on how up-to-date the system is. The following command synchronizes the repository databases and updates the system's packages, excluding "local" packages that are not in the configured repositories:
+# pacman -Syu
+-List all explicitly installed packages: pacman -Qe.
+-List all packages in the package group named group: pacman -Sg group
+-List all explicitly installed native packages (i.e. present in the sync database) that are not direct or optional dependencies: pacman -Qent.
+-List all foreign packages (typically manually downloaded and installed or packages removed from the repositories): pacman -Qm.
+-List all native packages (installed from the sync database(s)): pacman -Qn.
+-List packages by regex: pacman -Qs regex.
+-List packages by regex with custom output format: expac -s "%-30n %v" regex (needs expac).
 
 
 
