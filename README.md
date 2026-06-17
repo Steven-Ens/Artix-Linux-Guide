@@ -28,7 +28,7 @@ WARNING: This key is not certified with a trusted signature!
 
 ## Prepare the Installation Medium
 * Make sure that the USB is not mounted.
-* Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvme0nX```) with your drive and not appending a partition number:
+* Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvmeXn1```) with your drive and not appending a partition number:
 ```
 $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
@@ -38,7 +38,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 * ```status=progress``` → Shows transfer progress
 * ```conv=fsync``` → Flushes data before dd exits
 
-## Verify the Installation Medium was Booted in UEFI Mode
+## Verify UEFI Boot Mode
 ```
 # cat /sys/firmware/efi/fw_platform_size
 ```
@@ -62,7 +62,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 	* /dev/sdX2 for Linux swap (8-16GB)
 	* /dev/sdX3 for Linux filesystem (Remaining space)
 
-* Open fdisk on the target drive, not adding a partition number:
+* Open fdisk on the target drive, not a partition:
 ```
 # fdisk /dev/sdX
 ```
@@ -107,19 +107,19 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 
 ## Mount the Filesystems
-* Mount the encrypted root filesystem to /mnt:
+* Mount the filesystem on the encrypted root device to ```/mnt```:
 ```
 # mount /dev/mapper/cryptroot /mnt
 ```
-* Mount the EFI filesystem to /mnt/boot:
+* Mount the EFI System Partition (ESP) to ```/mnt/boot```:
 ```
 # mount --mkdir /dev/sdX1 /mnt/boot
 ```
-* Create a separate mount point for usb devices /mnt/usb:
+* Create a separate mount point for usb devices ```/mnt/usb```:
 ```
 # mkdir /mnt/usb
 ```
-* Confirm the mount points:
+* Verify the mounted filesystems:
 ```
 # lsblk
 ```
@@ -146,7 +146,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 # basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware vim cryptsetup 
 ```
 
-## Generate the File System Table
+## Generate the Filesystem Table
 ```
 # fstabgen -U /mnt >> /mnt/etc/fstab
 ```
@@ -172,11 +172,11 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 
 ## Configure mkinitcpio for LUKS Encryption
 ```
-vim /etc/mkinitcpio.conf
+# vim /etc/mkinitcpio.conf
 ```
 * Find the uncommented ```HOOKS=(...)```:
 * Add ```encrypt``` before ```filesystems```
-* Remove ```consolefonts```
+* Remove ```consolefont```
 ```
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt filesystems fsck)
 ```
@@ -228,38 +228,23 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # pacman -S refind
 ```
-* Copy the executable to the EFI System Partition (ESP):
+* Install:
 ```
-# mkdir -p /boot/EFI/refind
-# cp /usr/share/refind/refind_x64.efi /boot/EFI/refind/
+# refind-install
 ```
-* Use efibootmgr to create a boot entry in the UEFI NVRAM where ```/dev/sdX``` and ```Y``` are the device and partition number of your ESP:
-```
-# efibootmgr --create --disk /dev/sdX --part Y --loader /EFI/refind/refind_x64.efi --label "rEFInd Boot Manager" --unicode
-```
-* Confirm from the output that the boot entry 'rEFInd Boot Manager' was created.
-* Copy the config template:
-```
-# cp /usr/share/refind/refind.conf-sample /boot/EFI/refind/refind.conf
-```
-* Change ```timeout``` to ```-1``` seconds to automatically start the kernel.
-* Uncomment ```textonly``` to remove the icons.
+* Edit the config:
+	* Change ```timeout``` to ```-1``` seconds to automatically start the kernel.
+	* Uncomment ```textonly``` to remove the icons.
 ```
 # vim /boot/EFI/refind/refind.conf
 ```
 * Configure refind_linux.conf to pass the correct LUKS boot options, starting with the UUID of ```/dev/sdX3```:
 ```
-# blkid -s UUID -o value /dev/sdX3 >> /boot/refind_linux.conf
+# blkid -s UUID -o value /dev/sdX3 > /boot/refind_linux.conf
 ```
 * Add the following line to the top of ```/boot/refind_linux.conf``` using the UUID of ```/dev/sdX3```:
 ```
 "Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
-```
-
-## runit:
-* Create ```/run/runit/service/``` as this is where runit stores its service directory:
-```
-# mkdir /run/runit/service
 ```
 
 ## Install Network Manager
@@ -268,7 +253,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 * Autostart with runit:
 ```
-# ln -s /etc/runit/sv/NetworkManager/ /run/runit/service/
+# ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ```
 
 ## Set hostname
@@ -345,7 +330,7 @@ $ sudo pacman -S ttf-dejavu
 $ sudo pacman -S xorg-server xorg-xinit xorg-xset
 ```
 
-## Innstall i3wm:
+## Install i3wm:
 * Select ```i3-wm```, ```i3status``` and ```i3lock```:
 ```
 $ sudo pacman -S i3 
@@ -363,14 +348,25 @@ $ sudo pacman -S firefox
 
 ## Install ufw
 ```
-sudo pacman -S ufw ufw-runit
-sudo ln -s /etc/runit/sv/ufw /run/runit/service/
+$ sudo pacman -S ufw ufw-runit
+```
+* Autostart with runit:
+```
+sudo ln -s /etc/runit/sv/ufw /etc/runit/runsvdir/default/
+```
+* Configure settings:
+```
 $ sudo ufw default allow outgoing
 $ sudo ufw default deny incoming
+```
+* Enable ufw:
+```
 $ sudo ufw enable
-to check use
+```
+* Confirm ufw is running:
+```
 $ sudo ufw status verbose
-make sure it's active
+```
 
 ## Private Internet Access VPN
 
@@ -381,14 +377,40 @@ $ git clone https://github/com/Steven-Ens/Dotfiles .
 * Copy files to their locations.
 
 
+
+
+
+
+
+## System Updates
+Updating:
+****Make update command chain of 
+pacman -Syu
+-Had issue with 'corrupted or invalid pgp signature' running archlinux-keyring, so refresh keys first
+$ sudo pacman-key --refresh-keys
+$ sudo pacman -S archlinux-keyring
+$ sudo pacman -Syu
+$ sudo pacdiff
+
+Before first update:
+pacman -S archlinux-keyring
+-To go through .pacnew files after updating:
+sudo pacman -S pacman-contrib
+-To run:
+sudo pacdiff
+
+
+
+
+
 ## Using runit:
 * Enable a service:
 ```
-# ln -s /etc/runit/sv/<service> /run/runit/service/
+# ln -s /etc/runit/sv/<service> /etc/runit/runsvdir/default/
 ```
 * Disable a service for the next boot:
 ```
-# rm -f /run/runit/service/
+# rm -f /etc/runit/runsvdir/default/
 ```
 * Start a service:
 ```
@@ -410,9 +432,6 @@ $ git clone https://github/com/Steven-Ens/Dotfiles .
 ```
 # sv status /run/runit/service/*
 ```
-
-
-
 
 
 
@@ -504,48 +523,9 @@ $ sudo pacman -Rns $(pacman -Qtdq)
 -<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
 -<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
 
-
-
-nginx:
-$ sudo pacman -S nginx nginx-runit 
--It's free open-source HTTP server/reverse proxy with low resource consumption
--The default page served at http://127.0.0.1 is /usr/share/nginx/html/index.html
--Main config file is /etc/nginx/nginx.conf
--nginx has one master process and several worker processes, and the master process reads/evaluates configuration and maintains worker processes. Worker processes do actual processing of requests. nginx uses event-based model and OS-dependant mechanisms to distribute requests among worker processes
--Must define number of worker processes as either fixed or automatically adjusted to the number of CPU cores
--To start nginx, run executable file as sudo
-$ sudo nginx
--Controls below should be implemented by same user that initiated nginx
--Can be controlled with -s or signal flag:
--s stop = fast shutdown
--s quit = graceful shutdown allowing worker processes to finish serving current requests
--s reload = reload config file
--s reopen = reopening the log files
--Once the master process (started by nginx init script) receives the signal to reload configuration, it checks the syntax validity of the new configuration file and tries to apply the configuration provided in it. If this is a success, the master process starts new worker processes and sends messages to old worker processes, requesting them to shut down. Otherwise, the master process rolls back the changes and continues to work with the old configuration. Old worker processes, receiving a command to shut down, stop accepting new connections and continue to service current requests until all such requests are serviced. After that, the old worker processes exit. 
--By default running on port 80 accessed by 127.0.0.1 or 'http://localhost'
--You will get file permission error trying to change nginx directory out of /usr/share/nginx and you should instead copy over the Website/ directory into /usr/share/nginx/html/ and it will be owned by root then and work properly, also you only have the 'working' version there so you can work on the other version without worry
--Only root processes can listen to ports below 1024 like 80/443 so this is why nginx must be started as root permissions (with sudo)
--nginx config file has modules controlled by directives, which are divided into simple directives ending with ; and block directives surrounded by {}
--Serving files requires a server block (or multiple) inside of an http block with at least one location block
-http {
-    server {
-        location / {
-            root /usr/share/nginx/html/
-            index index.html
-    server { 
-        location /images/ {
-            root /usr/share/nginx/html/images
-            
-    }
-}
--After deciding which server to process request, nginx tests the URI specified in the request's header against parameters of location directive defined in server block
--URI is identifier of specific resource and URL is a specific type of identifier telling you how to access it (e.g. HTTPS, FTP) such as https://www.website.com. A URL is a URI but not all URIS are URLs
--The location block specifies '/' prefix compared with the URI from the request, and for matching request the URI will be added to the path specified inthe root directive (/usr/share/nginx/html/) to form the path to the requested file on the local file system
--In above example if request for http://localhost/images/example.png nginx will send the file, and if it doesn't exist nginx will send response indicating 404 error. Requests with URIS not stating /images/ will be mapped to the /sur/share/nginx/html/ directory
-
-
 rsync and cronie and cronie-runit
 $ sudo pacman -S rsync cronie cronie-runit
+-link to runit?
 $ sudo vim /etc/cron.hourly/rsync
 #!/bin/bash
 rsync -ahvP --delete /home/steve/ /mnt/usb/rsync/
@@ -570,10 +550,7 @@ ln -s /home/steve directory
 -Can unlink the link
 unlink name_of_systemlink
 -You can have broken links if the file/directory that the link points to changes path or is deleted
--If you get permission denied while trying to edit it you may have created a reference to itself, try going in the directory you're linking to and/or using full directory paths
-
--Official Artix Wiki Installation: https://wiki.artixlinux.org/Main/Installation
--Use 'man package' for package manuals
+-If you get permission denied while trying to edit it you may have created a reference to itself, try going in the directory you're linking to and/or using full directory paths=
 
 xrandr:
 -Set screen resolution and configure monitors as it's 'Resize and Rotate'  
@@ -596,21 +573,7 @@ SUBSYSTEM=="backlight", ACTION=="add", \
 -You can uninstall AUR packages normally, 
 $ sudo pacman -Rns 'package_name'
 
-Updating:
-****Make update command chain of 
-pacman -Syu
--Had issue with 'corrupted or invalid pgp signature' running archlinux-keyring, so refresh keys first
-$ sudo pacman-key --refresh-keys
-$ sudo pacman -S archlinux-keyring
-$ sudo pacman -Syu
-$ sudo pacdiff
 
-Before first update:
-pacman -S archlinux-keyring
--To go through .pacnew files after updating:
-sudo pacman -S pacman-contrib
--To run:
-sudo pacdiff
 
 windows/linux fs transfers
 sudo fdisk with 'o' at the start for dos
