@@ -261,12 +261,12 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 # echo <hostname> > /etc/hostname
 ```
 
-# Set root Password
+## Set root Password
 ```
 # passwd
 ```
 
-# Add New User 
+## Add New User 
 * Add user to the wheel group:
 ```
 # useradd -m -G wheel user
@@ -327,11 +327,18 @@ $ sudo pacman -S man git
 $ sudo pacman -S firefox
 ```
 
+Auto Numlock On Boot:
+https://www.archlinux.org/packages/?name=numlockx
+-Install the 'numlockx' package and add it to the ~/.xinitrc file before exec:
+$ sudo pacman -S numlockx
+
 ## Download Dotfiles
 ```
 $ git clone https://github/com/Steven-Ens/Dotfiles .
 ```
 * Copy files to their locations.
+* -After you make a change to your ~/.Xresources file you will need to reload it with xrdb:
+$ xrdb ~/.Xresources
 
 ## Install ufw
 ```
@@ -407,6 +414,36 @@ $ sudo chmod +x /etc/cron.hourly/backup
 $ sudo sv status cronie
 ```
 
+## Static IP Address:
+https://www.linuxtechi.com/configure-static-ip-address-rhel8/
+$ nmcli con show
+-This will give you something like:
+NAME                		UUID                                  			TYPE            	DEVICE 
+-Wired connection 1  	7a3b674a-f346-3cfb-8b30-ff70e6db1b60  	ethernet  	enp0s3
+-The goal:
+	-IP address = 192.168.0.4/24 ***SET THE NETMASK BIT COUNT HERE OR IN NMTUI AFTER IF YOU FORGET WHICH YOU WILL AGAIN!
+	-Netmask = 255.255.255.0
+	-Gateway = 192.168.0.1
+	-DNS = 8.8.8.8
+-You can then modify the connection with the following:
+-Note: "Wired connection 1" can be replaced by the device (enp0s3)
+$ nmcli con mod "Wired connection 1" ipv4.*
+-ipv4.address 192.168.0.4/24
+-ipv4.addresses HOST_IP_ADDRESS/IP_NETMASK_BIT_COUNT
+-ipv4.gateway 192.168.0.1 # use $ ip r | grep default to find default gateway
+-ipv4.dns "8.8.8.8"
+-ipv4.method manual # Changes configuration from DHCP to static!
+-To save the above changes and to reload the interface execute the following nmcli command:
+$ nmcli con up "Wired connection 1"
+Explanation:
+-IP Netmask Bit Count/IP Prefix: 24
+
+# System Usage
+Copy/Paste:
+-Using the modified URXVT bindings, you can freely copy between vim and the terminal
+-For copying from Firefox you must use CTL-Insert, but you can then use CTL-Shift-V to paste to the terminal or a vim file
+-For pasting to firefox you must use Shift-Insert, but you can initially copy with CTL-Shift-C from the terminal or a vim file
+
 # First Update of the System
 
 ## pacman
@@ -445,51 +482,68 @@ $ sudo pacman -S pacman-contrib
 $ sudo pacdiff
 ```
 
+## Using pacman:
+* Remove a package and its dependencies which are no longer required:
+```
+# pacman -Rns <package>
+```
+* ```R``` → Remove package.
+* ```n``` → Remove backup configuration files.
+* ```s``` → Remove unneeded dependencies.
+* List all explicitly installed packages:
+```
+$ sudo pacman -Qe
+```
+* ```Q``` → Query the local package database.
+* ```e``` → Show explicitly installed packages only.
+* List orphaned programs:
+```
+$ sudo pacman -Qdtq
+```
+* ```Q``` → Query the local package database.
+* ```d``` → Restrict to packages installed as dependencies.
+* ```t``` → Restrict to unrequired packages.
+* ```q``` → Show package names only.
+* Recursively delete orphans:
+```
+$ sudo pacman -Rns $(pacman -Qdtq)
+```
+
 ## Troubleshooting pacman
 * If you see errors related to the package signing keyring, refresh the keys:
 ```
 $ sudo pacman-key --refresh-keys
 ```
 
-## Using runit:
-* Enable a service:
+## Using runit
+* Enable and start a service in the current runlevel:
 ```
-# ln -s /etc/runit/sv/<service> /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/<service> /run/runit/service/
 ```
-* Disable a service for the next boot:
+* Disable and remove a service from the current runlevel:
 ```
-# rm -f /etc/runit/runsvdir/default/
+# rm -f /run/runit/service/<service>
 ```
 * Start a service:
 ```
-# sv up service
+# sv up <service>
 ```
-* Stop a service (it still starts on the next boot):
+* Stop a service:
 ```
-# sv down service
+# sv down <service>
 ```
 * Restart a service:
 ```
-# sv restart service
+# sv restart <service>
 ```
 * Service status:
 ```
-# sv status service
+# sv status <service>
 ```
 * List all running services:
 ```
 # sv status /run/runit/service/*
 ```
-
-## Using pacman:
--List all explicitly installed packages: 
-pacman -Qe.
--List orphan programs (dependencies of deleted program)
-$ sudo pacman -Qtdq
--Recursively delete orphans:
-$ sudo pacman -Rns $(pacman -Qtdq)
--To remove a package and its dependencies which are not required by any other installed package:
-# pacman -Rs package_name
 
 
 
