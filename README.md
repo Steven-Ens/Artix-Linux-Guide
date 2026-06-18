@@ -115,10 +115,6 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 # mount --mkdir /dev/sdX1 /mnt/boot
 ```
-* Create a separate mount point for usb devices ```/mnt/usb```:
-```
-# mkdir /mnt/usb
-```
 * Verify the mounted filesystems:
 ```
 # lsblk
@@ -190,8 +186,8 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 # pacman -S ntp
 # ntpd -qg
 ```
-* ```q``` → Quit after syncing once
-* ```g``` → Allow a large initial time correction
+* ```q``` → Quit after syncing once.
+* ```g``` → Allow a large initial time correction.
 
 ## Set the Time Zone:
 ```
@@ -247,7 +243,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 "Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
-## Install Network Manager
+## Install networkmanager
 ```
 # pacman -S networkmanager networkmanager-runit
 ```
@@ -255,10 +251,14 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ```
+* Confirm NetworkManager is running:
+```
+# sv status NetworkManager
+```
 
 ## Set hostname
 ```
-# echo hostname > /etc/hostname
+# echo <hostname> > /etc/hostname
 ```
 
 # Set root Password
@@ -273,7 +273,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 * ```m``` → Create home directory
 * ```G``` → Add supplementary groups
-* Set password:
+* Set user password:
 ```
 # passwd user
 ``` 
@@ -284,25 +284,6 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 # vim /etc/sudoers
 ```
 * Uncomment ```%wheel ALL=(ALL:ALL) ALL```
-
-## Initialize Pacman Keys
-```
-# pacman-key --init
-```
-* ```--init``` → Creates the local pacman GPG keyring used to verify package signatures
-```
-# pacman-key --populate artix
-```
-* ```--populate``` → Imports the trusted Artix package signing keys into pacman's keyring
-* ```artix``` → Uses the Artix keyring only
-  
-## Update the System
-```
-# pacman -Syu
-```
-* ```S``` → Sync and install packages
-* ```y``` → Refresh package database
-* ```u``` → Upgrade all installed packages
 
 ## Reboot
 * Exit the chroot environment:
@@ -346,62 +327,129 @@ $ sudo pacman -S man git
 $ sudo pacman -S firefox
 ```
 
-## Install ufw
-```
-$ sudo pacman -S ufw ufw-runit
-```
-* Autostart with runit:
-```
-sudo ln -s /etc/runit/sv/ufw /etc/runit/runsvdir/default/
-```
-* Configure settings:
-```
-$ sudo ufw default allow outgoing
-$ sudo ufw default deny incoming
-```
-* Enable ufw:
-```
-$ sudo ufw enable
-```
-* Confirm ufw is running:
-```
-$ sudo ufw status verbose
-```
-
-## Private Internet Access VPN
-
 ## Download Dotfiles
 ```
 $ git clone https://github/com/Steven-Ens/Dotfiles .
 ```
 * Copy files to their locations.
 
+## Install ufw
+```
+$ sudo pacman -S ufw ufw-runit
+```
+* Autostart with runit:
+```
+$ sudo ln -s /etc/runit/sv/ufw /run/runit/service/
+```
+* Configure settings:
+```
+$ sudo ufw default allow outgoing
+$ sudo ufw default deny incoming
+```
+* Enable ufw rules:
+```
+$ sudo ufw enable
+```
+* Confirm ufw is running:
+```
+$ sudo sv status ufw
+$ sudo ufw status verbose
+```
+
+## Private Internet Access VPN
 
 
+## Auto Mount USB:
+* Find the UUID of the USB drive:
+```
+$ lsblk -f
+```
+* Add the following line to ```/etc/fstab``` using the device UUID:
+```
+# UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
+```
+* ```nofail``` → Continue booting even if the USB drive is disconnected. → Continue booting even if the USB drive is disconnected.
+* ```dump``` → Legacy backup field used by the ```dump``` utility. Almost always set to ```0```.
+* ```fsck``` → Sets filesystem check order at boot.
+    * ```1``` → Root filesystem
+    * ```2``` → Other filesystems
+    * ```0``` → Disable checking
 
+## Auto Backup home
+* Install:
+```
+$ sudo pacman -S rsync cronie cronie-runit
+```
+* Autostart the service:
+```
+$ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
+```
+* Create a separate mount point for usb devices ```/mnt/usb```:
+```
+# mkdir /mnt/usb/
+```
+* Create the backup script:
+```
+$ sudo vim /etc/cron.hourly/backup
+```
+```bash
+#!/bin/bash
+rsync -a --delete /home/steve/ /mnt/usb/
+```
+* ```a``` → Archive mode that recursively preserves permissions, ownership, timestamps, symlinks, and other file attributes.
+* ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
+* Make the script executable:
+```
+$ sudo chmod +x /etc/cron.hourly/backup
+```
+* Verify cronie is running:
+```
+$ sudo sv status cronie
+```
 
+# First Update of the System
 
+## pacman
+* Uncomment the following lines in ```/etc/pacman.conf```:
+* ```Color``` → Improves readability by highlighting package information and status messages.
+* ```CheckSpace``` → Verifies sufficient disk space is available before installing or upgrading packages.
+* ```VerbosePkgLists``` → Displays installed and available package versions during upgrades, making changes easier to review.
 
-## System Updates
-Updating:
-****Make update command chain of 
-pacman -Syu
--Had issue with 'corrupted or invalid pgp signature' running archlinux-keyring, so refresh keys first
-$ sudo pacman-key --refresh-keys
-$ sudo pacman -S archlinux-keyring
-$ sudo pacman -Syu
+## Install pacdiff
+```
+$ sudo pacman -S pacman-contrib
+```
+
+## Initialize Pacman Keys
+```
+# pacman-key --init
+```
+* ```init``` → Creates the local pacman GPG keyring used to verify package signatures.
+```
+# pacman-key --populate artix
+```
+* ```populate``` → Imports the trusted Artix package signing keys into pacman's keyring.
+* ```artix``` → Uses the Artix keyring only.
+
+# System Maintenance
+
+## Update the System
+```
+# pacman -Syu
+```
+* ```S``` → Synchronize packages.
+* ```y``` → Refresh package database.
+* ```u``` → Upgrade all installed packages.
+* Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed.
+```
 $ sudo pacdiff
+```
 
-Before first update:
-pacman -S archlinux-keyring
--To go through .pacnew files after updating:
-sudo pacman -S pacman-contrib
--To run:
-sudo pacdiff
-
-
-
-
+## Troubleshooting pacman
+* If you see errors related to the package signing keyring, refresh the keys:
+```
+$ sudo pacman-key --refresh-keys
+```
 
 ## Using runit:
 * Enable a service:
@@ -432,6 +480,20 @@ sudo pacdiff
 ```
 # sv status /run/runit/service/*
 ```
+
+## Using pacman:
+-List all explicitly installed packages: 
+pacman -Qe.
+-List orphan programs (dependencies of deleted program)
+$ sudo pacman -Qtdq
+-Recursively delete orphans:
+$ sudo pacman -Rns $(pacman -Qtdq)
+-To remove a package and its dependencies which are not required by any other installed package:
+# pacman -Rs package_name
+
+
+
+
 
 
 
@@ -464,10 +526,6 @@ elogind[827]: Failed to fully start up daemon: No such file or directory
 #!/bin/bash
 sleep 0.4
 
-as of june 2021 arch repositories removed by default. Install 
-sudo pacman -S artix-linux-support
-follow the instructions to add [extra] [community] and [multilib] to /etc/pacman.conf
-
 to stop the 'zoom' udev error on login screen:
 copy /lib/udev/hwdb.d/60-keyboard.hwdb to /etc/udev/hwdb.d/
 comment out the following lines with 'zoom' on them:
@@ -477,60 +535,7 @@ $ sudo udevadm hwdb --update
 $ sudo udevadm control --reload-rules
 $ sudo udevadm trigger
 
-Change ownership:                                              
-chown -R user:group directory/
--R is recursively, can't use lower case r for some reason
-use 'groups user' or 'groups' as the user to establish what groups they're apart of
-chmod -R 777 directory/
--chmod needs -R too for directories
 
-pacman modifications:
--Pacman has a color option. Uncomment the 'Color' line in /etc/pacman.conf.
--Also uncomment 'CheckSpace' and 'VerbosePkgLists'  
-
--Managing .pacnew files after an update:
-$ sudo pacman -S pacman-contrib
-$ sudo pacdiff
--View changes between files and either override or delete the .pacnew file
-
--pacman: 
--List orphan programs (dependencies of deleted program)
-$ sudo pacman -Qtdq
--Recursively delete orphans:
-$ sudo pacman -Rns $(pacman -Qtdq)
--To install a single package or list of packages, including dependencies, issue the following command:
-# pacman -S package_name1 package_name2 ...
--To remove a single package, leaving all of its dependencies installed:
-# pacman -R package_name
--To remove a package and its dependencies which are not required by any other installed package:
-# pacman -Rs package_name
--Pacman can update all packages on the system with just one command. This could take quite a while depending on how up-to-date the system is. The following command synchronizes the repository databases and updates the system's packages, excluding "local" packages that are not in the configured repositories:
-# pacman -Syu
--List all explicitly installed packages: pacman -Qe.
--List all packages in the package group named group: pacman -Sg group
--List all explicitly installed native packages (i.e. present in the sync database) that are not direct or optional dependencies: pacman -Qent.
--List all foreign packages (typically manually downloaded and installed or packages removed from the repositories): pacman -Qm.
--List all native packages (installed from the sync database(s)): pacman -Qn.
--List packages by regex: pacman -Qs regex.
--List packages by regex with custom output format: expac -s "%-30n %v" regex (needs expac).
-
-
-
--Auto Mount USB Stick: 
-```bash
-# /dev/sdb1 UUID=11834887-d9d9-4f74-b7b8-28428eb9f93a   /mnt/usb    ext4        defaults    0 0
-```
--<dump> is checked by the dump(8) utility. This field is usually set to 0, which disables the check. 
--<fsck> sets the order for file system checks at boot time; see fsck(8). For the root device it should be 1. For other partitions it should be 2, or 0 to disable checking.
-
-rsync and cronie and cronie-runit
-$ sudo pacman -S rsync cronie cronie-runit
--link to runit?
-$ sudo vim /etc/cron.hourly/rsync
-#!/bin/bash
-rsync -ahvP --delete /home/steve/ /mnt/usb/rsync/
-$ sudo chmod +x /etc/cron.hourly/rsync
-$ ln -s /
 
 df vs du???
 -Check disk usage of directories/ like /home/steve/
@@ -570,44 +575,10 @@ SUBSYSTEM=="backlight", ACTION=="add", \
 -reboot to see changes
 -Can adjust brightness between 0 and 100
 
--You can uninstall AUR packages normally, 
-$ sudo pacman -Rns 'package_name'
-
-
-
-windows/linux fs transfers
-sudo fdisk with 'o' at the start for dos
-sudo pacman -S dosfstools
-sudo mkfs.msdos -F 32 /dev/sdXX
-
-You should be able to get dos2unix from your package manager on Linux.
-If you are using a Debian-based distro, you should be able to do 
-sudo pacman -S dos2unix
-If you are using a RH-like distro, you should be able to do sudo yum install dos2unix.
-Once it is installed, you can just give the target file as an argument'
-dos2unix test.py
-Also, note that this may not be the only problem you might run into while trying to move a script to Linux from Windows.
-For example, if you are invoking any external tools in your script, those tools will probably have different names or not exist at all on the other platform.
-Also, if you are using any relative file paths with path separators, the separator is different on Linux (which uses /) than Windows (which uses \).
-
 interactive
 alias rm='rm -i'
 alias mv='mv -i'
 alias cp='cp -i'
-
--pacman:
--List orphan programs (dependencies of deleted program)
-$ sudo pacman -Qtdq
--Recursively delete orphans:
-$ sudo pacman -Rns $(pacman -Qtdq)
--To install a single package or list of packages, including dependencies, issue the following command:
-# pacman -S package_name1 package_name2 ...
--To remove a package and its dependencies which are not required by any other installed p ackage: 
-pacman -Rs package_name
--Pacman can update all packages on the system with just one command.The following command synchronizes the repository databases and updates the system's packages, excluding "local" packages that are not in the configured repositories:
-# pacman -Syu
--List all explicitly installed packages: 
-pacman -Qe.
 
 
 
