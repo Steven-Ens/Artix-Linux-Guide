@@ -51,6 +51,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 	* ```Boot Mode: Both```
 	* ```Boot Priority: UEFI First```
 	* ```CSM Support: Yes``` (Automatic)
+    * ```Safe Boot: Disabled```
 
 ## Partition the Disk
 * List the block devices and identify the target drive ```/dev/sdX```:
@@ -317,28 +318,73 @@ $ sudo pacman -S xorg-server xorg-xinit xorg-xset
 $ sudo pacman -S i3 
 ```
 
-## Install man and git
+## Install man
 ```
-$ sudo pacman -S man git
+$ sudo pacman -S man
 ```
+
+## Install git
+```
+$ sudo pacman -S git
+```
+* Run git config:
+```
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+```
+
+* install feh and mpv and qbittorrent
 
 ## Install firefox
 ```
 $ sudo pacman -S firefox
 ```
+Auto Fullscreen Firefox and Stop Auto Hiding in Fullscreen:
+-Open new tab and type 'about:config' 
+-Click button promising to be careful
+-Type the following in the search box: browser.
+-Double click it to turn it from False to True
+-Type the following in the search box: browser.fullscreen.autohide
+-Double click it to turn it from True to False
+**turn fullscreen on too so not half screen
 
-Auto Numlock On Boot:
-https://www.archlinux.org/packages/?name=numlockx
--Install the 'numlockx' package and add it to the ~/.xinitrc file before exec:
+## Auto Numlock On Boot
+* Install ```numlockx``` and add it to ```~/.xinitrc``` before ```exec i3```:
+```
 $ sudo pacman -S numlockx
+```
 
-## Download Dotfiles
+## Keyboard Brightness
+* Install:
 ```
-$ git clone https://github/com/Steven-Ens/Dotfiles .
+$ sudo pacman -S brightnessctl
 ```
-* Copy files to their locations.
-* -After you make a change to your ~/.Xresources file you will need to reload it with xrdb:
-$ xrdb ~/.Xresources
+* add to group so can use without sudo in .xinitrc and keyboard shortcut
+
+## Audio
+* Install:
+```
+$ sudo pacman -S pipewire pipewire-pulse wireplumber
+```
+* Verify with:
+```
+$ pactl info
+```
+
+-Install zip and unzip:
+# sudo pacman -S zip unzip
+-zip/unzip file.zip -d /media/usb/"). 
+
+foundry
+
+## Install Dotfiles
+```
+$ git clone https://github.com/Steven-Ens/Dotfiles
+```
+* Copy files to their locations (make a script?).
+```
+$ sudo reboot
+```
 
 ## Install ufw
 ```
@@ -365,6 +411,30 @@ $ sudo ufw status verbose
 
 ## Private Internet Access VPN
 
+Open the Terminal.
+Install OpenVPN based on your Linux distribution:
+
+Arch-based: sudo pacman -S openvpn
+
+Change to the OpenVPN directory:
+cd /etc/openvpn
+Download the configuration file:
+
+    Or using curl:
+    sudo curl -o openvpn.zip https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
+
+Extract the downloaded file:
+sudo unzip openvpn.zip
+
+Connect to a VPN server using a configuration file:
+sudo openvpn config-filename.ovpn
+
+Example:
+sudo openvpn us_california.ovpn
+If the connection fails, try downloading an alternative configuration set and repeat the process using a different file type or protocol.
+Bash alias:
+alias vpn='sudo openvpn --config /etc/openvpn/client/CA\ Toronto.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt
+
 
 ## Auto Mount USB:
 * Find the UUID of the USB drive:
@@ -373,7 +443,8 @@ $ lsblk -f
 ```
 * Add the following line to ```/etc/fstab``` using the device UUID:
 ```
-# UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
+# /dev/sdb1
+UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
 ```
 * ```nofail``` → Continue booting even if the USB drive is disconnected. → Continue booting even if the USB drive is disconnected.
 * ```dump``` → Legacy backup field used by the ```dump``` utility. Almost always set to ```0```.
@@ -393,7 +464,7 @@ $ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
 ```
 * Create a separate mount point for usb devices ```/mnt/usb```:
 ```
-# mkdir /mnt/usb/
+$ sudo mkdir /mnt/usb/
 ```
 * Create the backup script:
 ```
@@ -414,17 +485,15 @@ $ sudo chmod +x /etc/cron.hourly/backup
 $ sudo sv status cronie
 ```
 
-## Static IP Address:
-https://www.linuxtechi.com/configure-static-ip-address-rhel8/
+## Static IP Address
+* Show active connections:
+```
 $ nmcli con show
--This will give you something like:
-NAME                		UUID                                  			TYPE            	DEVICE 
--Wired connection 1  	7a3b674a-f346-3cfb-8b30-ff70e6db1b60  	ethernet  	enp0s3
--The goal:
-	-IP address = 192.168.0.4/24 ***SET THE NETMASK BIT COUNT HERE OR IN NMTUI AFTER IF YOU FORGET WHICH YOU WILL AGAIN!
-	-Netmask = 255.255.255.0
-	-Gateway = 192.168.0.1
-	-DNS = 8.8.8.8
+```
+
+NAME                	UUID           TYPE        DEVICE 
+-Wired connection 1  	<UUID>  	ethernet  	enp0s3
+
 -You can then modify the connection with the following:
 -Note: "Wired connection 1" can be replaced by the device (enp0s3)
 $ nmcli con mod "Wired connection 1" ipv4.*
@@ -547,10 +616,6 @@ $ sudo pacman-key --refresh-keys
 
 
 
-
-
-
-
 OpenSSH:
 # pacman -S openssh openssh-runit
 # ln -s /etc/runit/sv/sshd/ /run/runit/service/
@@ -567,75 +632,9 @@ $ scp -r username@from_host:/remote/directory /local/directory
 -Copy directory from local host to remote host
 $ scp -r /local/directory/ username@to_host:/remote/directory/
 
-docker:
-sudo pacman -S docker docker-runit
-sudo ln -s /etc/runit/sv/docker /run/runit/service
-
-dbus and elogind error:
-elogind[827]: Failed to connect to system bus: No such file or directory
-elogind[827]: Failed to fully start up daemon: No such file or directory
--That's because runit services are started in parallel, elogind immediately looks for a dbus service, while dbus was still initializing. Add a 0.4 second delay before the elogind dbus check:
-# vim /etc/runit/runsvdir/current/elogind/run
--Add the following line above the dbus check so it's the first line under #!/bin/bash
-#!/bin/bash
-sleep 0.4
-
-to stop the 'zoom' udev error on login screen:
-copy /lib/udev/hwdb.d/60-keyboard.hwdb to /etc/udev/hwdb.d/
-comment out the following lines with 'zoom' on them:
-683, 689, 703, 731, 749, 1456       (880 and 881 995 test it)
-next:
-$ sudo udevadm hwdb --update
-$ sudo udevadm control --reload-rules
-$ sudo udevadm trigger
-
-
-
-df vs du???
--Check disk usage of directories/ like /home/steve/
-$ du -sh /home/steve
--s gives total size of specified folder
--h is human readable format
-
-zip/unzip stuff and quick usage 
-
-ln -s directory/file1 directory/file2
--Linking existing file1 to new file2 that will be created
--Can also link directories to directories:
-ln -s /home/steve directory
--This would link /home/steve to a created directory called 'directory'
--hard link by default, that's why you specify -s for symbolic or 'soft' link
--Any changes to either file is reflected in the other
--Can unlink the link
-unlink name_of_systemlink
--You can have broken links if the file/directory that the link points to changes path or is deleted
--If you get permission denied while trying to edit it you may have created a reference to itself, try going in the directory you're linking to and/or using full directory paths=
-
 xrandr:
 -Set screen resolution and configure monitors as it's 'Resize and Rotate'  
 $ sudo pacman -S xorg-xrandr
 -type
 $ xrandr
 -It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
-
-Screen Brightness and Laptop Brightness Keys:
--xorg-xbacklight by itself wasn't working, so use 
-$ sudo pacman -S acpilight
--acpilight provides xorg-xbacklight so don't install it too, it is backwards compatible and uses ACPI interface to set display brightness 
--Place the following data in a created file /etc/udev/rules.d/90-backlight.rules. As you can see it allows members of wheel group to adjust the brightness file by changing its permissions to be writable by wheel group members:
-SUBSYSTEM=="backlight", ACTION=="add", \
-  RUN+="/bin/chgrp wheel /sys/class/backlight/intel_backlight/brightness", \
-  RUN+="/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
--reboot to see changes
--Can adjust brightness between 0 and 100
-
-interactive
-alias rm='rm -i'
-alias mv='mv -i'
-alias cp='cp -i'
-
-
-
-
-
-
