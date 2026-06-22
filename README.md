@@ -1,4 +1,4 @@
-# Artix Linux Installation Guide
+# Artix Linux Guide
 * Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
 ## What This Guide Provides
@@ -248,7 +248,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # pacman -S networkmanager networkmanager-runit
 ```
-* Autostart with runit:
+* Autostart with runit (```/run``` is tmpfs filesystem and is created at boot, so use ```/etc/runit/runsvdir/default/``` during installation):
 ```
 # ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ```
@@ -299,7 +299,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 
 ## Install the Terminal
 ```
-$ sudo pacman -S rxvt-unicode 
+$ sudo pacman -S kitty 
 ```
 
 ## Install the System Font
@@ -327,13 +327,6 @@ $ sudo pacman -S man
 ```
 $ sudo pacman -S git
 ```
-* Run git config:
-```
-git config --global user.email "you@example.com"
-git config --global user.name "Your Name"
-```
-
-* install feh and mpv and qbittorrent
 
 ## Install firefox
 ```
@@ -371,17 +364,55 @@ $ sudo pacman -S pipewire pipewire-pulse wireplumber
 $ pactl info
 ```
 
--Install zip and unzip:
-# sudo pacman -S zip unzip
--zip/unzip file.zip -d /media/usb/"). 
+* install feh and mpv and qbittorrent
 
-foundry
+## Install zip & unzip
+```
+$ sudo pacman -S zip unzip
+```
+
+## Install Foundry
+```
+$ curl -L https://foundry.paradigm.xyz | bash
+```
+* Reload shell:
+```
+$ source ~/.bashrc
+```
+* Install Foundry binaries:
+```
+$ foundryup
+```
+
+## Install nvm, node and npm
+* Install NVM:
+```
+$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+```
+* Reload shell:
+```
+$ source ~/.bashrc
+```
+* Install Node.js + npm:
+```
+$ nvm install --lts
+```
+* Verify:
+```
+$ node -v
+$ npm -v
+```
 
 ## Install Dotfiles
 ```
 $ git clone https://github.com/Steven-Ens/Dotfiles
 ```
-* Copy files to their locations (make a script?).
+* Run the two installation scripts in Dotfiles/scripts:
+```
+$ sudo ./scripts/install_dotfiles.sh
+$ ./scripts/install_vim_plugins.sh
+```
+* Reboot:
 ```
 $ sudo reboot
 ```
@@ -508,10 +539,61 @@ Explanation:
 -IP Netmask Bit Count/IP Prefix: 24
 
 # System Usage
+
+## Using runit
+* Enable and start a service in the current runlevel:
+```
+# ln -s /etc/runit/sv/<service> /run/runit/service/
+```
+* Disable and remove a service from the current runlevel:
+```
+# rm -f /run/runit/service/<service>
+```
+* Start a service:
+```
+# sv up <service>
+```
+* Stop a service:
+```
+# sv down <service>
+```
+* Restart a service:
+```
+# sv restart <service>
+```
+* Service status:
+```
+# sv status <service>
+```
+* List all running services:
+```
+# sv status /run/runit/service/*
+```
+
 Copy/Paste:
--Using the modified URXVT bindings, you can freely copy between vim and the terminal
+-Using the modified kitty bindings, you can freely copy between vim and the terminal
 -For copying from Firefox you must use CTL-Insert, but you can then use CTL-Shift-V to paste to the terminal or a vim file
 -For pasting to firefox you must use Shift-Insert, but you can initially copy with CTL-Shift-C from the terminal or a vim file
+
+Create a zip:
+
+zip archive.zip file.txt
+
+Multiple files:
+
+zip archive.zip file1.txt file2.txt file3.txt
+
+A directory recursively:
+
+zip -r archive.zip my_directory/
+
+Extract a zip:
+
+unzip archive.zip
+
+Extract to a specific directory:
+
+unzip archive.zip -d destination_directory/
 
 # First Update of the System
 
@@ -584,35 +666,6 @@ $ sudo pacman -Rns $(pacman -Qdtq)
 $ sudo pacman-key --refresh-keys
 ```
 
-## Using runit
-* Enable and start a service in the current runlevel:
-```
-# ln -s /etc/runit/sv/<service> /run/runit/service/
-```
-* Disable and remove a service from the current runlevel:
-```
-# rm -f /run/runit/service/<service>
-```
-* Start a service:
-```
-# sv up <service>
-```
-* Stop a service:
-```
-# sv down <service>
-```
-* Restart a service:
-```
-# sv restart <service>
-```
-* Service status:
-```
-# sv status <service>
-```
-* List all running services:
-```
-# sv status /run/runit/service/*
-```
 
 
 
