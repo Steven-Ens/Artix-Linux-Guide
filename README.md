@@ -316,9 +316,9 @@ $ sudo pacman -S brightnessctl
 ```
 * Add user to the video group so ```brightnessctl``` can be used without sudo:
 ```
-$ sudo usermod -aG video steve
+$ sudo usermod -a -G video steve
 ```
-* ```a``` → ***
+* ```a``` → Append group keeping existing groups.
 * ```G``` → Add supplementary groups
 
 ## Audio
@@ -326,6 +326,13 @@ $ sudo usermod -aG video steve
 ```
 $ sudo pacman -S pipewire pipewire-pulse wireplumber
 ```
+
+xrandr:
+-Set screen resolution and configure monitors as it's 'Resize and Rotate'  
+$ sudo pacman -S xorg-xrandr
+-type
+$ xrandr
+-It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
 
 ## Install zip & unzip
 ```
@@ -351,7 +358,6 @@ $ sudo pacman -S firefox pipewire-jack
 * Prevent the window from auto hiding in fullscreen:
 * Open new tab and type ```about:config``` 
 * Double click to set to ```False```
-
 
 * install feh and mpv and qbittorrent
 
@@ -429,6 +435,42 @@ $ sudo sv status ufw
 $ sudo ufw status verbose
 ```
 
+## Static IP Address
+* Show active connections:
+	* Ethernet uses ```Wired connection 1``` by default.
+	* Wireless uses the network name (SSID).
+```
+$ nmcli con show
+```
+* Find the default gateway:
+```
+$ ip r | grep default
+```
+* Set the default gateway:
+```
+$ nmcli con mod "Wired connection 1" ipv4.gateway 192.168.0.1
+```
+* Set the IP address:
+```
+$ nmcli con mod "Wired connection 1" ipv4.addresses 192.168.0.X/24
+```
+* Set the DNS servers to Cloudflare:
+```
+$ nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1 1.0.0.1"
+```
+* Change from DHCP to a static IP:
+```
+$ nmcli con mod "Wired connection 1" ipv4.method manual
+```
+* Disable IPv6 for PIA VPN:
+```
+$ nmcli con mod "Wired connection 1" ipv6.method disabled
+```
+* Reload the connection:
+```
+$ nmcli con up "Wired connection 1"
+```
+
 ## Private Internet Access VPN
 * Install OpenVPN:
 ```
@@ -459,6 +501,62 @@ sudo chmod 600 /etc/openvpn/login.txt
 $ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt'
 ```
 * ```--auth-nocache``` Prevents OpenVPN from retaining the username and password in memory after authentication.
+
+## OpenSSH
+* Install:
+```
+$ sudo pacman -S openssh openssh-runit
+```
+* Enable and start the service:
+```
+$ sudo ln -s /etc/runit/sv/sshd /run/runit/service/
+```
+* Verify:
+```
+$ sv status sshd
+```
+* Allow ssh in ufw:
+```
+$ sudo ufw allow ssh
+```
+* Verify:
+```
+$ sudo ufw status
+```
+* Connect from another machine:
+```
+$ ssh steve@192.168.0.X
+```
+
+## SSH Key Creation
+* Generate a key pair on the client machine:
+```
+$ ssh-keygen -t ed25519 -a 100
+```
+* ```-t ed25519``` → Edwards-curve Digital Signature Algorithm
+* ```-a 100``` → Specifies the number of Key Derivation Function (KDF) rounds used to protect the private key if you set a passphrase.
+* Accept the default location ```~/.ssh/id_ed25519```.
+* Copy the public key to the server:
+```
+$ ssh-copy-id steve@192.168.0.X
+```
+* Verify logging in without entering the account password:
+```
+$ ssh steve@192.168.0.X
+```
+* Disable password authentication:
+```
+$ sudo vim /etc/ssh/sshd_config
+```
+* Change:
+```PasswordAuthentication no```
+```PubkeyAuthentication yes```
+```PermitRootLogin no```
+```AllowUsers steve```
+* Restart SSH:
+```
+$ sudo sv restart sshd
+```
 
 ## Auto Mount USB:
 * Find the UUID of the USB drive:
@@ -508,31 +606,6 @@ $ sudo chmod +x /etc/cron.hourly/backup
 ```
 $ sudo sv status cronie
 ```
-
-## Static IP Address
-* Show active connections, you should see ```Wired connection 1```:
-```
-$ nmcli con show
-```
-* Note ```Wired connection 1``` can be replaced by the device.
-```
-$ nmcli con mod "Wired connection 1" ipv4.*
-```
-* Edit your network address:
-```
-ipv4.address 192.168.0.X/24
-```
-# use $ ip r | grep default to find default gateway
--ipv4.gateway 192.168.0.1 
-
--ipv4.dns "8.8.8.8"
-
--ipv4.method manual # Changes configuration from DHCP to static!
-
--To save the above changes and to reload the interface execute the following nmcli command:
-$ nmcli con up "Wired connection 1"
-Explanation:
-
 
 # System Usage
 
@@ -587,6 +660,16 @@ $ unzip archive.zip
 ```
 $ unzip archive.zip -d <directory>/
 ```
+
+SCP:
+-Copy file from remote host to local host
+$ scp username@from_host:file.txt /local/directory/
+-Copy file from local host to remote host
+$ scp file.txt username@to_host:/remote/directory/
+-Copy directory from remote host to local host
+$ scp -r username@from_host:/remote/directory /local/directory
+-Copy directory from local host to remote host
+$ scp -r /local/directory/ username@to_host:/remote/directory/
 
 # First Update of the System
 
@@ -658,29 +741,3 @@ $ sudo pacman -Rns $(pacman -Qdtq)
 ```
 $ sudo pacman-key --refresh-keys
 ```
-
-
-
-
-OpenSSH:
-# pacman -S openssh openssh-runit
-# ln -s /etc/runit/sv/sshd/ /run/runit/service/
-Key Creation and Copying:
--
-
-SCP:
--Copy file from remote host to local host
-$ scp username@from_host:file.txt /local/directory/
--Copy file from local host to remote host
-$ scp file.txt username@to_host:/remote/directory/
--Copy directory from remote host to local host
-$ scp -r username@from_host:/remote/directory /local/directory
--Copy directory from local host to remote host
-$ scp -r /local/directory/ username@to_host:/remote/directory/
-
-xrandr:
--Set screen resolution and configure monitors as it's 'Resize and Rotate'  
-$ sudo pacman -S xorg-xrandr
--type
-$ xrandr
--It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
