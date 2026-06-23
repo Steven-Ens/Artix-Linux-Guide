@@ -1,18 +1,18 @@
 # Artix Linux Guide
-* Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
+Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
 ## What This Guide Provides
-* This guide implements the following:
-	* GPT + UEFI installation
-    * rEFInd boot manager
-    * runit init system
-    * LUKS-encrypted root partition
+This guide implements the following:
+* GPT + UEFI installation
+* rEFInd boot manager
+* runit init system
+* LUKS-encrypted root partition
 
 ## Verify the ISO Checksum
 ```
 $ sha256sum artix-base-runit-version-x86_64.iso
 ```
-* Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
+Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
   
 ## Verify the ISO Signature
 ```
@@ -24,7 +24,7 @@ $ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix
 ```
 WARNING: This key is not certified with a trusted signature!
 ```
-* This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
+This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
 
 ## Prepare the Installation Medium
 * Make sure that the USB is not mounted.
@@ -140,7 +140,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 
 ## Install the Base System
 ```
-# basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware vim cryptsetup 
+# basestrap /mnt base base-devel runit elogind-runit linux-lts linux-firmware cryptsetup vim man git
 ```
 
 ## Generate the Filesystem Table
@@ -252,10 +252,6 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ```
-* Confirm NetworkManager is running:
-```
-# sv status NetworkManager
-```
 
 ## Set hostname
 ```
@@ -307,40 +303,6 @@ $ sudo pacman -S kitty
 $ sudo pacman -S ttf-dejavu
 ```
 
-## Install xorg:
-```
-$ sudo pacman -S xorg-server xorg-xinit xorg-xset
-```
-
-## Install i3wm:
-* Select ```i3-wm```, ```i3status``` and ```i3lock```:
-```
-$ sudo pacman -S i3 
-```
-
-## Install man
-```
-$ sudo pacman -S man
-```
-
-## Install git
-```
-$ sudo pacman -S git
-```
-
-## Install firefox
-```
-$ sudo pacman -S firefox
-```
-Auto Fullscreen Firefox and Stop Auto Hiding in Fullscreen:
--Open new tab and type 'about:config' 
--Click button promising to be careful
--Type the following in the search box: browser.
--Double click it to turn it from False to True
--Type the following in the search box: browser.fullscreen.autohide
--Double click it to turn it from True to False
-**turn fullscreen on too so not half screen
-
 ## Auto Numlock On Boot
 * Install ```numlockx``` and add it to ```~/.xinitrc``` before ```exec i3```:
 ```
@@ -352,24 +314,46 @@ $ sudo pacman -S numlockx
 ```
 $ sudo pacman -S brightnessctl
 ```
-* add to group so can use without sudo in .xinitrc and keyboard shortcut
+* Add user to the video group so ```brightnessctl``` can be used without sudo:
+```
+$ sudo usermod -aG video steve
+```
+* ```a``` → ***
+* ```G``` → Add supplementary groups
 
 ## Audio
 * Install:
 ```
 $ sudo pacman -S pipewire pipewire-pulse wireplumber
 ```
-* Verify with:
-```
-$ pactl info
-```
-
-* install feh and mpv and qbittorrent
 
 ## Install zip & unzip
 ```
 $ sudo pacman -S zip unzip
 ```
+
+## Install xorg:
+```
+$ sudo pacman -S xorg-server xorg-xinit xorg-xset
+```
+
+## Install i3wm:
+* Select ```i3-wm```, ```i3status``` and ```i3lock```:
+```
+$ sudo pacman -S i3 
+```
+
+## Install firefox
+* Select the ```pipewire-jack``` provider:
+```
+$ sudo pacman -S firefox pipewire-jack
+```
+* Prevent the window from auto hiding in fullscreen:
+* Open new tab and type ```about:config``` 
+* Double click to set to ```False```
+
+
+* install feh and mpv and qbittorrent
 
 ## Install Foundry
 ```
@@ -382,6 +366,20 @@ $ source ~/.bashrc
 * Install Foundry binaries:
 ```
 $ foundryup
+```
+
+## Install Dotfiles
+```
+$ git clone https://github.com/Steven-Ens/Dotfiles
+```
+* Run the two installation scripts in Dotfiles/scripts:
+```
+$ sudo ./scripts/install_dotfiles.sh
+$ ./scripts/install_vim_plugins.sh 
+```
+* Reboot:
+```
+$ sudo reboot
 ```
 
 ## Install nvm, node and npm
@@ -403,18 +401,9 @@ $ node -v
 $ npm -v
 ```
 
-## Install Dotfiles
+## Install Solidity LSP for coc.nvim
 ```
-$ git clone https://github.com/Steven-Ens/Dotfiles
-```
-* Run the two installation scripts in Dotfiles/scripts:
-```
-$ sudo ./scripts/install_dotfiles.sh
-$ ./scripts/install_vim_plugins.sh
-```
-* Reboot:
-```
-$ sudo reboot
+$ npm install -g @nomicfoundation/solidity-language-server
 ```
 
 ## Install ufw
@@ -441,31 +430,35 @@ $ sudo ufw status verbose
 ```
 
 ## Private Internet Access VPN
-
-Open the Terminal.
-Install OpenVPN based on your Linux distribution:
-
-Arch-based: sudo pacman -S openvpn
-
-Change to the OpenVPN directory:
-cd /etc/openvpn
-Download the configuration file:
-
-    Or using curl:
-    sudo curl -o openvpn.zip https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
-
-Extract the downloaded file:
-sudo unzip openvpn.zip
-
-Connect to a VPN server using a configuration file:
-sudo openvpn config-filename.ovpn
-
-Example:
-sudo openvpn us_california.ovpn
-If the connection fails, try downloading an alternative configuration set and repeat the process using a different file type or protocol.
-Bash alias:
-alias vpn='sudo openvpn --config /etc/openvpn/client/CA\ Toronto.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt
-
+* Install OpenVPN:
+```
+$ sudo pacman -S openvpn
+```
+* Change to the OpenVPN directory:
+```
+$ cd /etc/openvpn
+```
+* Download the configuration file:
+```
+$ sudo curl -o openvpn.zip https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
+```
+* Extract the downloaded file to ```client/```:
+```
+$ sudo unzip openvpn.zip -d /etc/openvpn/client/
+```
+* Create ```/etc/openvpn/login.txt``` with the format:
+```username```
+```password```
+* Secure ```login.txt``` so only root can access the stored username and password:
+```
+sudo chown root:root /etc/openvpn/login.txt
+sudo chmod 600 /etc/openvpn/login.txt
+```
+* Test connection:
+```
+$ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt'
+```
+* ```--auth-nocache``` Prevents OpenVPN from retaining the username and password in memory after authentication.
 
 ## Auto Mount USB:
 * Find the UUID of the USB drive:
@@ -517,26 +510,29 @@ $ sudo sv status cronie
 ```
 
 ## Static IP Address
-* Show active connections:
+* Show active connections, you should see ```Wired connection 1```:
 ```
 $ nmcli con show
 ```
-
-NAME                	UUID           TYPE        DEVICE 
--Wired connection 1  	<UUID>  	ethernet  	enp0s3
-
--You can then modify the connection with the following:
--Note: "Wired connection 1" can be replaced by the device (enp0s3)
+* Note ```Wired connection 1``` can be replaced by the device.
+```
 $ nmcli con mod "Wired connection 1" ipv4.*
--ipv4.address 192.168.0.4/24
--ipv4.addresses HOST_IP_ADDRESS/IP_NETMASK_BIT_COUNT
--ipv4.gateway 192.168.0.1 # use $ ip r | grep default to find default gateway
+```
+* Edit your network address:
+```
+ipv4.address 192.168.0.X/24
+```
+# use $ ip r | grep default to find default gateway
+-ipv4.gateway 192.168.0.1 
+
 -ipv4.dns "8.8.8.8"
+
 -ipv4.method manual # Changes configuration from DHCP to static!
+
 -To save the above changes and to reload the interface execute the following nmcli command:
 $ nmcli con up "Wired connection 1"
 Explanation:
--IP Netmask Bit Count/IP Prefix: 24
+
 
 # System Usage
 
@@ -570,30 +566,27 @@ Explanation:
 # sv status /run/runit/service/*
 ```
 
-Copy/Paste:
--Using the modified kitty bindings, you can freely copy between vim and the terminal
--For copying from Firefox you must use CTL-Insert, but you can then use CTL-Shift-V to paste to the terminal or a vim file
--For pasting to firefox you must use Shift-Insert, but you can initially copy with CTL-Shift-C from the terminal or a vim file
+## Copy & Paste
+* Using the modified kitty bindings CTL-Shift-c and CTL-Shift-p, you can freely copy and paste between vim and the terminal
+* Use CTL-c to copy within firefox, then use CTL-Shift-V to paste to vim or the terminal
 
-Create a zip:
+## Create a zip
+```
+$ zip archive.zip <file>
+```
+* zip a directory recursively:
+```
+$ zip -r archive.zip <directory>/
+```
 
-zip archive.zip file.txt
-
-Multiple files:
-
-zip archive.zip file1.txt file2.txt file3.txt
-
-A directory recursively:
-
-zip -r archive.zip my_directory/
-
-Extract a zip:
-
-unzip archive.zip
-
-Extract to a specific directory:
-
-unzip archive.zip -d destination_directory/
+## Extract a zip
+```
+$ unzip archive.zip
+```
+* Extract to a specific directory:
+```
+$ unzip archive.zip -d <directory>/
+```
 
 # First Update of the System
 
