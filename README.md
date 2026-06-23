@@ -1,18 +1,18 @@
 # Artix Linux Guide
-Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
+* Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
 ## What This Guide Provides
-This guide implements the following:
-* GPT + UEFI installation
-* rEFInd boot manager
-* runit init system
-* LUKS-encrypted root partition
+* This guide implements the following:
+	* GPT + UEFI installation
+	* rEFInd boot manager
+	* runit init system
+	* LUKS-encrypted root partition
 
 ## Verify the ISO Checksum
 ```
 $ sha256sum artix-base-runit-version-x86_64.iso
 ```
-Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
+* Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
   
 ## Verify the ISO Signature
 ```
@@ -24,7 +24,7 @@ $ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix
 ```
 WARNING: This key is not certified with a trusted signature!
 ```
-This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
+* This warning is normal on a fresh system. It means the signing key is not yet trusted in your local GPG keyring through GPG’s web-of-trust model.
 
 ## Prepare the Installation Medium
 * Make sure that the USB is not mounted.
@@ -327,12 +327,19 @@ $ sudo usermod -a -G video steve
 $ sudo pacman -S pipewire pipewire-pulse wireplumber
 ```
 
-xrandr:
--Set screen resolution and configure monitors as it's 'Resize and Rotate'  
+## Screen Resolution
+* Install:
+```
 $ sudo pacman -S xorg-xrandr
--type
+```
+* Show available displays and resolutions:
+```
 $ xrandr
--It will show names/resolutions of different outputs. * in the resolution line shows the current refresh rate and resolution, and + shows the preferred one
+```
+* Set a resolution and refresh rate:
+```
+$ xrandr --output eDP-1 --mode 1920x1080 --rate 60
+```
 
 ## Install zip & unzip
 ```
@@ -350,7 +357,7 @@ $ sudo pacman -S xorg-server xorg-xinit xorg-xset
 $ sudo pacman -S i3 
 ```
 
-## Install firefox
+## Install Firefox
 * Select the ```pipewire-jack``` provider:
 ```
 $ sudo pacman -S firefox pipewire-jack
@@ -359,7 +366,27 @@ $ sudo pacman -S firefox pipewire-jack
 * Open new tab and type ```about:config``` 
 * Double click to set to ```False```
 
-* install feh and mpv and qbittorrent
+## Install feh
+```
+$ sudo pacman -S feh
+```
+* Open single file:
+```
+$ feh <file>
+```
+* Open all files in directory:
+```
+$ feh
+```
+
+## Install mpv
+```
+$ sudo pacman -S mpv
+```
+* Run:
+```
+$ mpv <file>
+```
 
 ## Install Foundry
 ```
@@ -410,6 +437,11 @@ $ npm -v
 ## Install Solidity LSP for coc.nvim
 ```
 $ npm install -g @nomicfoundation/solidity-language-server
+```
+
+## Install solhint
+```
+$ npm install -g solhint
 ```
 
 ## Install ufw
@@ -549,11 +581,11 @@ $ ssh steve@192.168.0.X
 $ sudo vim /etc/ssh/sshd_config
 ```
 * Change:
-```PasswordAuthentication no```
-```PubkeyAuthentication yes```
-```PermitRootLogin no```
-```AllowUsers steve```
-* Restart SSH:
+* ```PasswordAuthentication no```
+* ```PubkeyAuthentication yes```
+* ```PermitRootLogin no```
+* ```AllowUsers steve```
+* Restart sshd:
 ```
 $ sudo sv restart sshd
 ```
@@ -640,8 +672,8 @@ $ sudo sv status cronie
 ```
 
 ## Copy & Paste
-* Using the modified kitty bindings CTL-Shift-c and CTL-Shift-p, you can freely copy and paste between vim and the terminal
-* Use CTL-c to copy within firefox, then use CTL-Shift-V to paste to vim or the terminal
+* Use CTL-Shift-c and CTL-Shift-p to copy and paste between vim and the terminal
+* Use CTL-c to copy inside of firefox, then use CTL-Shift-V to paste to vim and the terminal
 
 ## Create a zip
 ```
@@ -661,8 +693,8 @@ $ unzip archive.zip
 $ unzip archive.zip -d <directory>/
 ```
 
-SCP:
--Copy file from remote host to local host
+## scp
+* Copy file from remote host to local host
 $ scp username@from_host:file.txt /local/directory/
 -Copy file from local host to remote host
 $ scp file.txt username@to_host:/remote/directory/
