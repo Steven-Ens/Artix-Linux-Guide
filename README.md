@@ -443,6 +443,12 @@ $ npm install -g @nomicfoundation/solidity-language-server
 ```
 $ npm install -g solhint
 ```
+* In each project repo add the file ```.solhint.json``` with the following configuration:
+```
+{
+  "extends": "solhint:recommended"
+}
+```
 
 ## Install ufw
 ```
@@ -672,8 +678,8 @@ $ sudo sv status cronie
 ```
 
 ## Copy & Paste
-* Use CTL-Shift-c and CTL-Shift-p to copy and paste between vim and the terminal
-* Use CTL-c to copy inside of firefox, then use CTL-Shift-V to paste to vim and the terminal
+* Use CTL-Shift-c and CTL-Shift-p to copy and paste between vim and the terminal.
+* Use CTL-c to copy inside of firefox, then use CTL-Shift-V to paste to vim and the terminal.
 
 ## Create a zip
 ```
@@ -694,14 +700,22 @@ $ unzip archive.zip -d <directory>/
 ```
 
 ## scp
-* Copy file from remote host to local host
-$ scp username@from_host:file.txt /local/directory/
--Copy file from local host to remote host
-$ scp file.txt username@to_host:/remote/directory/
--Copy directory from remote host to local host
-$ scp -r username@from_host:/remote/directory /local/directory
--Copy directory from local host to remote host
-$ scp -r /local/directory/ username@to_host:/remote/directory/
+* Copy a file from a remote host to the local machine:
+```
+$ scp <remote-user>@<remote-host>:<remote-file> <local-directory>/
+```
+* Copy a directory from a remote host to the local machine:
+```
+$ scp -r <remote-user>@<remote-host>:<remote-directory> <local-directory>/
+```
+* Copy a file from the local machine to a remote host:
+```
+$ scp <local-file> <remote-user>@<remote-host>:<remote-directory>/
+```
+* Copy a directory from the local machine to a remote host:
+```
+$ scp -r <local-directory>/ <remote-user>@<remote-host>:<remote-directory>/
+```
 
 # First Update of the System
 
@@ -773,3 +787,60 @@ $ sudo pacman -Qe
 ```
 $ sudo pacman-key --refresh-keys
 ```
+
+## Backup the EFI and Root Filesystems with fsarchiver
+Install fsarchiver:
+```bash
+sudo pacman -S fsarchiver
+```
+Create a backup containing both the EFI partition and the encrypted root filesystem:
+```bash
+sudo fsarchiver savefs artix-backup.fsa \
+    /dev/sda1 \
+    /dev/mapper/cryptroot
+```
+View the filesystems stored in the archive:
+```bash
+fsarchiver archinfo artix-backup.fsa
+```
+Example output:
+```text
+Filesystem id=0: /dev/sda1
+Filesystem id=1: /dev/mapper/cryptroot
+```
+Copy the archive to external storage for safekeeping.
+## Restore the EFI and Root Filesystems
+Boot from a live USB.
+Recreate the GPT partition table and partitions if necessary:
+```text
+/dev/sda1  EFI System Partition
+/dev/sda2  Swap
+/dev/sda3  Linux partition for LUKS
+```
+Format the EFI partition:
+```bash
+mkfs.fat -F32 /dev/sda1
+```
+Recreate and open the LUKS container:
+```bash
+cryptsetup luksFormat /dev/sda3
+cryptsetup open /dev/sda3 cryptroot
+```
+Restore the EFI partition:
+```bash
+sudo fsarchiver restfs artix-backup.fsa id=0,dest=/dev/sda1
+```
+Restore the root filesystem:
+```bash
+sudo fsarchiver restfs artix-backup.fsa id=1,dest=/dev/mapper/cryptroot
+```
+Recreate the swap partition:
+```bash
+mkswap /dev/sda2
+```
+Mount the restored system:
+```bash
+mount /dev/mapper/cryptroot /mnt
+mount /dev/sda1 /mnt/boot
+```
+Reinstall or verify the bootloader if required.
