@@ -581,10 +581,10 @@ $ ssh steve@192.168.0.X
 $ sudo vim /etc/ssh/sshd_config
 ```
 * Change:
-* ```PasswordAuthentication no```
-* ```PubkeyAuthentication yes```
-* ```PermitRootLogin no```
-* ```AllowUsers steve```
+	* ```PasswordAuthentication no```
+	* ```PubkeyAuthentication yes```
+	* ```PermitRootLogin no```
+	* ```AllowUsers steve```
 * Restart sshd:
 ```
 $ sudo sv restart sshd
@@ -736,6 +736,18 @@ $ sudo pacman -S pacman-contrib
 * ```S``` → Synchronize packages.
 * ```y``` → Refresh package database.
 * ```u``` → Upgrade all installed packages.
+* List orphaned programs:
+```
+$ sudo pacman -Qdtq
+```
+* ```Q``` → Query the local package database.
+* ```d``` → Restrict to packages installed as dependencies.
+* ```t``` → Restrict to unrequired packages.
+* ```q``` → Show package names only.
+* Recursively delete orphans:
+```
+$ sudo pacman -Rns $(pacman -Qdtq)
+```
 * Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed.
 ```
 $ sudo pacdiff
@@ -755,18 +767,6 @@ $ sudo pacman -Qe
 ```
 * ```Q``` → Query the local package database.
 * ```e``` → Show explicitly installed packages only.
-* List orphaned programs:
-```
-$ sudo pacman -Qdtq
-```
-* ```Q``` → Query the local package database.
-* ```d``` → Restrict to packages installed as dependencies.
-* ```t``` → Restrict to unrequired packages.
-* ```q``` → Show package names only.
-* Recursively delete orphans:
-```
-$ sudo pacman -Rns $(pacman -Qdtq)
-```
 
 ## Troubleshooting pacman
 * If you see errors related to the package signing keyring, refresh the keys:
