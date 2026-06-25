@@ -13,13 +13,13 @@
 ```
 $ sha256sum artix-base-runit-<version>-x86_64.iso
 ```
-* Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
+* Compare the output against the SHA256 checksum listed on the Artix download page: https://artixlinux.org/download.php.
   
 ## Verify the ISO Signature
 ```
 $ gpg --auto-key-retrieve --verify artix-base-runit-<version>-x86_64.iso.sig artix-base-runit-<version>-x86_64.iso
 ```
-* Make sure the RSA key is the key specified on the Artix website under 'Official ISO Images' (eg. [`0xB886B428`](https://pgpkeys.eu:11371/pks/lookup?search=0xA574A1915CEDE31A3BFF5A68606520ACB886B428&fingerprint=on&op=index)).
+* Make sure the RSA key is the key specified on the Artix website under **Official ISO Images** (eg. [`0xB886B428`](https://pgpkeys.eu:11371/pks/lookup?search=0xA574A1915CEDE31A3BFF5A68606520ACB886B428&fingerprint=on&op=index)).
 * You may see:
 ```
 WARNING: This key is not certified with a trusted signature!
@@ -60,7 +60,7 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 ```
 * For a UEFI system, use a GPT partition table with the following layout: 
 	* /dev/sdX1 for EFI System (1GB)
-	* /dev/sdX2 for Linux swap (8-16GB)
+	* /dev/sdX2 for Linux swap (\<system ram\>GB)
 	* /dev/sdX3 for Linux filesystem (Remaining space)
 
 * Open fdisk on the target drive, not a partition:
