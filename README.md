@@ -3,20 +3,21 @@
 
 ## What This Guide Provides
 * This guide implements the following:
-	* GPT + UEFI installation
-	* rEFInd boot manager
-	* runit init system
-	* LUKS-encrypted root partition
+	* GPT + UEFI
+	* rEFInd
+	* runit
+	* LUKS
+   	* i3wm
 
 ## Verify the ISO Checksum
 ```
-$ sha256sum artix-base-runit-version-x86_64.iso
+$ sha256sum artix-base-runit-<version>-x86_64.iso
 ```
 * Compare the output against the SHA256 checksum listed on the Artix download page (https://artixlinux.org/download.php).
   
 ## Verify the ISO Signature
 ```
-$ gpg --auto-key-retrieve --verify artix-base-runit-version-x86_64.iso.sig artix-base-runit-version-x86_64.iso
+$ gpg --auto-key-retrieve --verify artix-base-runit-<version>-x86_64.iso.sig artix-base-runit-<version>-x86_64.iso
 ```
 * Make sure the RSA key is the key specified on the Artix website under 'Official ISO Images' (eg. ```0xB886B428```).
 * Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
@@ -30,7 +31,7 @@ WARNING: This key is not certified with a trusted signature!
 * Make sure that the USB is not mounted.
 * Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvmeXn1```) with your drive and not appending a partition number:
 ```
-$ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+$ dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 * ```if``` → Input file
 * ```of``` → Output file
@@ -47,7 +48,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 
 ## ThinkPad T440 UEFI Troubleshooting
 * On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
-* After resetting the BIOS to default settings, these boot options worked:
+* After resetting the BIOS to its default and setting the install media as the first boot device, these boot options worked:
 	* ```Boot Mode: Both```
 	* ```Boot Priority: UEFI First```
 	* ```CSM Support: Yes``` (Automatic)
@@ -133,7 +134,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 
 ## Select the Mirrors
-* Mirrors are defined in /etc/pacman.d/mirrorlist, ensure the ones on the top are closest to you geographically:
+* Mirrors are defined in ```/etc/pacman.d/mirrorlist```, ensure the ones on the top are closest to you geographically:
 ```
 # vim /etc/pacman.d/mirrorlist
 ```
@@ -147,7 +148,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 ```
 # fstabgen -U /mnt >> /mnt/etc/fstab
 ```
-* ```U``` → Use UUIDs instead of device names.
+* ```-U``` → Use UUIDs instead of device names.
 * Confirm:
 ```
 # cat /mnt/etc/fstab
@@ -174,6 +175,7 @@ $ dd if=~/artix-base-runit-version-x86_64.iso of=/dev/sdX bs=4M status=progress 
 * Find the uncommented ```HOOKS=(...)```:
 * Add ```encrypt``` before ```filesystems```
 * Remove ```consolefont```
+* Result:
 ```
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt filesystems fsck)
 ```
@@ -181,14 +183,16 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # mkinitcpio -P
 ```
+* ```-P``` → Build all presets.
+* Safe to ignore ```WARNING: Possibly missing firmware for module: 'qat_6000'``` on systems without Intel QuickAssist (QAT) hardware.
 
 ## Update the System Clock
 ```
 # pacman -S ntp
-# ntpd -qg
+# ntpd -q -g
 ```
-* ```q``` → Quit after syncing once.
-* ```g``` → Allow a large initial time correction.
+* ```-q``` → Quit after syncing once.
+* ```-g``` → Allow a large initial time correction.
 
 ## Set the Time Zone:
 ```
@@ -199,9 +203,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # hwclock --systohc
 ```
-* ```sys``` → System clock
-* ```to``` → To
-* ```hc``` → Hardware clock
+* ```--systohc``` → System clock to hardware clock.
 
 ## Localization
 * Uncomment ```en_US.UTF-8 UTF-8``` and ```en_US ISO-8859-1``` in /etc/locale.gen:
@@ -216,7 +218,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
-* Confirm:
+* Confirm by listing all locales:
 ```
 # locale -a
 ```
@@ -235,13 +237,17 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # vim /boot/EFI/refind/refind.conf
 ```
-* Configure refind_linux.conf to pass the correct LUKS boot options, starting with the UUID of ```/dev/sdX3```:
+* Configure ```refind_linux.conf``` to pass the correct LUKS boot options, starting with the UUID of ```/dev/sdX3```:
 ```
 # blkid -s UUID -o value /dev/sdX3 > /boot/refind_linux.conf
 ```
-* Add the following line to the top of ```/boot/refind_linux.conf``` using the UUID of ```/dev/sdX3```:
+* Edit the file:
 ```
-"Boot with LUKS" "cryptdevice=UUID=abcd1234-5678-efgh:cryptroot root=/dev/mapper/cryptroot rw"
+# vim refind_linux.conf
+```
+* Add the following line to the top using the UUID copied into the file:
+```
+"Boot with LUKS" "cryptdevice=UUID=<UUID>:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
 ## Install networkmanager
@@ -266,13 +272,13 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ## Add New User 
 * Add user to the wheel group:
 ```
-# useradd -m -G wheel user
+# useradd -m -G wheel <user>
 ```
-* ```m``` → Create home directory
-* ```G``` → Add supplementary groups
+* ```-m``` → Create home directory
+* ```-G``` → Add supplementary groups
 * Set user password:
 ```
-# passwd user
+# passwd <user>
 ``` 
 
 ## Add User to sudoers
@@ -292,6 +298,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 # umount -R /mnt
 # reboot
 ```
+* Wireless connections will need to be re-created.
 
 ## Install the Terminal
 ```
@@ -316,7 +323,7 @@ $ sudo pacman -S brightnessctl
 ```
 * Add user to the video group so ```brightnessctl``` can be used without sudo:
 ```
-$ sudo usermod -a -G video steve
+$ sudo usermod -a -G video <user>
 ```
 * ```a``` → Append group keeping existing groups.
 * ```G``` → Add supplementary groups
@@ -338,7 +345,7 @@ $ xrandr
 ```
 * Set a resolution and refresh rate:
 ```
-$ xrandr --output eDP-1 --mode 1920x1080 --rate 60
+$ xrandr --output <display> --mode <resolution> --rate <rate>
 ```
 
 ## Install zip & unzip
@@ -405,10 +412,14 @@ $ foundryup
 ```
 $ git clone https://github.com/Steven-Ens/Dotfiles
 ```
-* Run the two installation scripts in Dotfiles/scripts:
+* Go to ```scripts/```:
 ```
-$ sudo ./scripts/install_dotfiles.sh
-$ ./scripts/install_vim_plugins.sh 
+$ cd ~/Dotfiles/scripts/
+```
+* Run the following installation scripts:
+```
+$ sudo ./install_dotfiles.sh
+$ ./install_vim_plugins.sh 
 ```
 * Reboot:
 ```
@@ -442,12 +453,6 @@ $ npm install -g @nomicfoundation/solidity-language-server
 ## Install solhint
 ```
 $ npm install -g solhint
-```
-* In each project repo add the file ```.solhint.json``` with the following configuration:
-```
-{
-  "extends": "solhint:recommended"
-}
 ```
 
 ## Install ufw
@@ -563,7 +568,7 @@ $ sudo ufw status
 ```
 * Connect from another machine:
 ```
-$ ssh steve@192.168.0.X
+$ ssh <user>@<ip address>
 ```
 
 ## SSH Key Creation
@@ -576,11 +581,11 @@ $ ssh-keygen -t ed25519 -a 100
 * Accept the default location ```~/.ssh/id_ed25519```.
 * Copy the public key to the server:
 ```
-$ ssh-copy-id steve@192.168.0.X
+$ ssh-copy-id <user>@<ip address>
 ```
 * Verify logging in without entering the account password:
 ```
-$ ssh steve@192.168.0.X
+$ ssh <user>@<ip address>
 ```
 * Disable password authentication:
 ```
@@ -590,7 +595,7 @@ $ sudo vim /etc/ssh/sshd_config
 	* ```PasswordAuthentication no```
 	* ```PubkeyAuthentication yes```
 	* ```PermitRootLogin no```
-	* ```AllowUsers steve```
+	* ```AllowUsers <user>```
 * Restart sshd:
 ```
 $ sudo sv restart sshd
@@ -632,7 +637,7 @@ $ sudo vim /etc/cron.hourly/backup
 ```
 ```bash
 #!/bin/bash
-rsync -a --delete /home/steve/ /mnt/usb/
+rsync -a --delete /home/<user>/ /mnt/usb/
 ```
 * ```a``` → Archive mode that recursively preserves permissions, ownership, timestamps, symlinks, and other file attributes.
 * ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
@@ -715,6 +720,14 @@ $ scp <local-file> <remote-user>@<remote-host>:<remote-directory>/
 * Copy a directory from the local machine to a remote host:
 ```
 $ scp -r <local-directory>/ <remote-user>@<remote-host>:<remote-directory>/
+```
+
+## solhint
+* In the root of each project repo add the file ```.solhint.json``` with the following configuration:
+```
+{
+  "extends": "solhint:recommended"
+}
 ```
 
 # First Update of the System
