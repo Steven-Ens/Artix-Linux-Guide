@@ -19,8 +19,7 @@ $ sha256sum artix-base-runit-<version>-x86_64.iso
 ```
 $ gpg --auto-key-retrieve --verify artix-base-runit-<version>-x86_64.iso.sig artix-base-runit-<version>-x86_64.iso
 ```
-* Make sure the RSA key is the key specified on the Artix website under 'Official ISO Images' (eg. ```0xB886B428```).
-* Ensure you see ```Good signature from "Christos Nouskas <nous@artixlinux.org>"```
+* Make sure the RSA key is the key specified on the Artix website under 'Official ISO Images' (eg. [`0xB886B428`](https://pgpkeys.eu:11371/pks/lookup?search=0xA574A1915CEDE31A3BFF5A68606520ACB886B428&fingerprint=on&op=index)).
 * You may see:
 ```
 WARNING: This key is not certified with a trusted signature!
@@ -31,13 +30,13 @@ WARNING: This key is not certified with a trusted signature!
 * Make sure that the USB is not mounted.
 * Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvmeXn1```) with your drive and not appending a partition number:
 ```
-$ dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+$ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 * ```if``` → Input file
 * ```of``` → Output file
 * ```bs``` → Writes in 4 MiB chunks
 * ```status=progress``` → Shows transfer progress
-* ```conv=fsync``` → Flushes data before dd exits
+* ```conv=fsync``` → Flushes data before exiting
 
 ## Verify UEFI Boot Mode
 ```
