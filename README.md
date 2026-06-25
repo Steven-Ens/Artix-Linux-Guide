@@ -189,7 +189,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ## Update the System Clock
 ```
 # pacman -S ntp
-# ntpd -q -g
+# ntpd -qg
 ```
 * ```-q``` → Quit after syncing once.
 * ```-g``` → Allow a large initial time correction.
@@ -272,7 +272,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ## Add New User 
 * Add user to the wheel group:
 ```
-# useradd -m -G wheel <user>
+# useradd -mG wheel <user>
 ```
 * ```-m``` → Create home directory
 * ```-G``` → Add supplementary groups
@@ -323,10 +323,10 @@ $ sudo pacman -S brightnessctl
 ```
 * Add user to the video group so ```brightnessctl``` can be used without sudo:
 ```
-$ sudo usermod -a -G video <user>
+$ sudo usermod -aG video <user>
 ```
-* ```a``` → Append group keeping existing groups.
-* ```G``` → Add supplementary groups
+* ```-a``` → Append group keeping existing groups.
+* ```-G``` → Add supplementary groups
 
 ## Audio
 * Install:
@@ -445,12 +445,12 @@ $ node -v
 $ npm -v
 ```
 
-## Install Solidity LSP for coc.nvim
+## Install Solidity LSP Globally for coc.nvim
 ```
 $ npm install -g @nomicfoundation/solidity-language-server
 ```
 
-## Install solhint
+## Install solhint Globally
 ```
 $ npm install -g solhint
 ```
@@ -491,11 +491,11 @@ $ ip r | grep default
 ```
 * Set the default gateway:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.gateway 192.168.0.1
+$ nmcli con mod "Wired connection 1" ipv4.gateway <ip address>
 ```
 * Set the IP address:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.addresses 192.168.0.X/24
+$ nmcli con mod "Wired connection 1" ipv4.addresses <ip address>/24
 ```
 * Set the DNS servers to Cloudflare:
 ```
@@ -683,25 +683,25 @@ $ sudo sv status cronie
 ```
 
 ## Copy & Paste
-* Use CTL-Shift-c and CTL-Shift-p to copy and paste between vim and the terminal.
-* Use CTL-c to copy inside of firefox, then use CTL-Shift-V to paste to vim and the terminal.
+* Use ```CTL-Shift-c``` and ```CTL-Shift-p``` to copy and paste between vim and the terminal.
+* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-V``` to paste into vim and the terminal.
 
 ## Create a zip
 ```
-$ zip archive.zip <file>
+$ zip <file>.zip <file>
 ```
 * zip a directory recursively:
 ```
-$ zip -r archive.zip <directory>/
+$ zip -r <directory>.zip <directory>/
 ```
 
 ## Extract a zip
 ```
-$ unzip archive.zip
+$ unzip <file>.zip
 ```
 * Extract to a specific directory:
 ```
-$ unzip archive.zip -d <directory>/
+$ unzip <directory>.zip -d <directory>/
 ```
 
 ## scp
@@ -751,7 +751,7 @@ $ sudo pacman -S pacman-contrib
 ```
 # pacman-key --populate artix
 ```
-* ```populate``` → Imports the trusted Artix package signing keys into pacman's keyring.
+* ```--populate``` → Imports the trusted Artix package signing keys into pacman's keyring.
 * ```artix``` → Uses the Artix keyring only.
 
 # System Maintenance
@@ -760,17 +760,17 @@ $ sudo pacman -S pacman-contrib
 ```
 # pacman -Syu
 ```
-* ```S``` → Synchronize packages.
-* ```y``` → Refresh package database.
-* ```u``` → Upgrade all installed packages.
+* ```-S``` → Synchronize packages.
+* ```-y``` → Refresh package database.
+* ```-u``` → Upgrade all installed packages.
 * List orphaned programs:
 ```
 $ sudo pacman -Qdtq
 ```
-* ```Q``` → Query the local package database.
-* ```d``` → Restrict to packages installed as dependencies.
-* ```t``` → Restrict to unrequired packages.
-* ```q``` → Show package names only.
+* ```-Q``` → Query the local package database.
+* ```-d``` → Restrict to packages installed as dependencies.
+* ```-t``` → Restrict to unrequired packages.
+* ```-q``` → Show package names only.
 * Recursively delete orphans:
 ```
 $ sudo pacman -Rns $(pacman -Qdtq)
@@ -785,15 +785,15 @@ $ sudo pacdiff
 ```
 # pacman -Rns <package>
 ```
-* ```R``` → Remove package.
-* ```n``` → Remove backup configuration files.
-* ```s``` → Remove unneeded dependencies.
+* ```-R``` → Remove package.
+* ```-n``` → Remove backup configuration files.
+* ```-s``` → Remove unneeded dependencies.
 * List all explicitly installed packages:
 ```
 $ sudo pacman -Qe
 ```
-* ```Q``` → Query the local package database.
-* ```e``` → Show explicitly installed packages only.
+* ```-Q``` → Query the local package database.
+* ```-e``` → Show explicitly installed packages only.
 
 ## Troubleshooting pacman
 * If you see errors related to the package signing keyring, refresh the keys:
