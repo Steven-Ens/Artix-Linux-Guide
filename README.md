@@ -28,7 +28,7 @@ WARNING: This key is not certified with a trusted signature!
 
 ## Prepare the Installation Medium
 * Make sure that the USB is not mounted.
-* Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvmeXn1```) with your drive and not appending a partition number:
+* Run the following command, replacing ```/dev/sdX``` (or ```/dev/nvmeXn1```) with your drive:
 ```
 $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 ```
@@ -47,11 +47,14 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 
 ## ThinkPad T440 UEFI Troubleshooting
 * On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
-* After resetting the BIOS to its default and setting the install media as the first boot device, these boot options worked:
-	* ```Boot Mode: Both```
-	* ```Boot Priority: UEFI First```
-	* ```CSM Support: Yes``` (Automatic)
-    * ```Safe Boot: Disabled```
+* The following worked:
+	* Reset the BIOS to its default.
+   	* Set the install media as the first boot device.
+	* Boot options:
+		* ```Boot Mode: Both```
+		* ```Boot Priority: UEFI First```
+		* ```CSM Support: Yes``` (Automatic)
+    	* ```Safe Boot: Disabled```
 
 ## Partition the Disk
 * List the block devices and identify the target drive ```/dev/sdX```:
@@ -61,9 +64,9 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 * For a UEFI system, use a GPT partition table with the following layout: 
 	* /dev/sdX1 for EFI System (1GB)
 	* /dev/sdX2 for Linux swap (\<system ram\>GB)
-	* /dev/sdX3 for Linux filesystem (Remaining space)
+	* /dev/sdX3 for Linux filesystem (\<remaining space\>GB)
 
-* Open fdisk on the target drive, not a partition:
+* Open fdisk on the target drive:
 ```
 # fdisk /dev/sdX
 ```
@@ -172,8 +175,8 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 # vim /etc/mkinitcpio.conf
 ```
 * Find the uncommented ```HOOKS=(...)```:
-* Add ```encrypt``` before ```filesystems```
-* Remove ```consolefont```
+	* Add ```encrypt``` before ```filesystems```
+	* Remove ```consolefont```
 * Result:
 ```
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt filesystems fsck)
@@ -195,7 +198,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 
 ## Set the Time Zone:
 ```
-# ln -sf /usr/share/zoneinfo/Canada/Pacific /etc/localtime
+# ln -sf /usr/share/zoneinfo/<country>/<region> /etc/localtime
 ```
 
 ## Run hwclock to Generate /etc/adjtime:
@@ -205,7 +208,7 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 * ```--systohc``` → System clock to hardware clock.
 
 ## Localization
-* Uncomment ```en_US.UTF-8 UTF-8``` and ```en_US ISO-8859-1``` in /etc/locale.gen:
+* Uncomment ```en_US.UTF-8 UTF-8``` and ```en_US ISO-8859-1``` in ```/etc/locale.gen```:
 ```
 # vim /etc/locale.gen
 ```
@@ -285,32 +288,26 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # vim /etc/sudoers
 ```
-* Uncomment ```%wheel ALL=(ALL:ALL) ALL```
+* Uncomment: ```%wheel ALL=(ALL:ALL) ALL```
 
 ## Reboot
 * Exit the chroot environment:
 ```
 # exit
 ```
-* Recursively unmount /mnt and reboot:
+* Recursively unmount ```/mnt``` and reboot:
 ```                         
 # umount -R /mnt
 # reboot
 ```
 * Wireless connections will need to be re-created.
 
-## Install the Terminal
+## Install the Terminal & System Font
 ```
-$ sudo pacman -S kitty 
-```
-
-## Install the System Font
-```
-$ sudo pacman -S ttf-dejavu
+$ sudo pacman -S kitty ttf-dejavu
 ```
 
 ## Auto Numlock On Boot
-* Install ```numlockx``` and add it to ```~/.xinitrc``` before ```exec i3```:
 ```
 $ sudo pacman -S numlockx
 ```
@@ -324,27 +321,13 @@ $ sudo pacman -S brightnessctl
 ```
 $ sudo usermod -aG video <user>
 ```
-* ```-a``` → Append group keeping existing groups.
+* ```-a``` → Append group keeping existing groups
 * ```-G``` → Add supplementary groups
 
 ## Audio
 * Install:
 ```
 $ sudo pacman -S pipewire pipewire-pulse wireplumber
-```
-
-## Screen Resolution
-* Install:
-```
-$ sudo pacman -S xorg-xrandr
-```
-* Show available displays and resolutions:
-```
-$ xrandr
-```
-* Set a resolution and refresh rate:
-```
-$ xrandr --output <display> --mode <resolution> --rate <rate>
 ```
 
 ## Install zip & unzip
@@ -354,7 +337,7 @@ $ sudo pacman -S zip unzip
 
 ## Install xorg:
 ```
-$ sudo pacman -S xorg-server xorg-xinit xorg-xset
+$ sudo pacman -S xorg-server xorg-xinit xorg-xset xorg-xrandr
 ```
 
 ## Install i3wm:
@@ -369,29 +352,21 @@ $ sudo pacman -S i3
 $ sudo pacman -S firefox pipewire-jack
 ```
 * Prevent the window from auto hiding in fullscreen:
-* Open new tab and type ```about:config``` 
-* Double click to set to ```False```
+* Open new tab and type ```about:config```
+* Type the following in the search box:
+```
+browser.fullscreen.autohide
+```
+* Double click to set to ```False```.
 
 ## Install feh
 ```
 $ sudo pacman -S feh
 ```
-* Open single file:
-```
-$ feh <file>
-```
-* Open all files in directory:
-```
-$ feh
-```
 
 ## Install mpv
 ```
 $ sudo pacman -S mpv
-```
-* Run:
-```
-$ mpv <file>
 ```
 
 ## Install Foundry
@@ -471,7 +446,7 @@ $ sudo ufw default deny incoming
 ```
 $ sudo ufw enable
 ```
-* Confirm ufw is running:
+* Confirm ufw is active and running:
 ```
 $ sudo sv status ufw
 $ sudo ufw status verbose
@@ -480,7 +455,7 @@ $ sudo ufw status verbose
 ## Static IP Address
 * Show active connections:
 	* Ethernet uses ```Wired connection 1``` by default.
-	* Wireless uses the network name (SSID).
+	* Wireless uses the network name <SSID>.
 ```
 $ nmcli con show
 ```
@@ -544,7 +519,7 @@ $ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --a
 ```
 * ```--auth-nocache``` Prevents OpenVPN from retaining the username and password in memory after authentication.
 
-## OpenSSH
+## OpenSSH Server
 * Install:
 ```
 $ sudo pacman -S openssh openssh-runit
@@ -565,7 +540,7 @@ $ sudo ufw allow ssh
 ```
 $ sudo ufw status
 ```
-* Connect from another machine:
+* Connect from client machine:
 ```
 $ ssh <user>@<ip address>
 ```
@@ -586,7 +561,7 @@ $ ssh-copy-id <user>@<ip address>
 ```
 $ ssh <user>@<ip address>
 ```
-* Disable password authentication:
+* Harden sshd:
 ```
 $ sudo vim /etc/ssh/sshd_config
 ```
@@ -605,19 +580,23 @@ $ sudo sv restart sshd
 ```
 $ lsblk -f
 ```
+* Create a separate mount point for USB devices ```/mnt/usb```:
+```
+$ sudo mkdir /mnt/usb/
+```
 * Add the following line to ```/etc/fstab``` using the device UUID:
 ```
 # /dev/sdb1
 UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
 ```
-* ```nofail``` → Continue booting even if the USB drive is disconnected. → Continue booting even if the USB drive is disconnected.
+* ```nofail``` → Continue booting even if the USB drive is disconnected.
 * ```dump``` → Legacy backup field used by the ```dump``` utility. Almost always set to ```0```.
 * ```fsck``` → Sets filesystem check order at boot.
     * ```1``` → Root filesystem
     * ```2``` → Other filesystems
     * ```0``` → Disable checking
 
-## Auto Backup home
+## Auto Backup /home/<user>
 * Install:
 ```
 $ sudo pacman -S rsync cronie cronie-runit
@@ -626,19 +605,16 @@ $ sudo pacman -S rsync cronie cronie-runit
 ```
 $ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
 ```
-* Create a separate mount point for usb devices ```/mnt/usb```:
-```
-$ sudo mkdir /mnt/usb/
-```
 * Create the backup script:
 ```
 $ sudo vim /etc/cron.hourly/backup
 ```
-```bash
+* Add:
+```
 #!/bin/bash
 rsync -a --delete /home/<user>/ /mnt/usb/
 ```
-* ```a``` → Archive mode that recursively preserves permissions, ownership, timestamps, symlinks, and other file attributes.
+* ```a``` → Archive mode that recursively preserves file attributes.
 * ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
 * Make the script executable:
 ```
@@ -683,7 +659,7 @@ $ sudo sv status cronie
 
 ## Copy & Paste
 * Use ```CTL-Shift-c``` and ```CTL-Shift-p``` to copy and paste between vim and the terminal.
-* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-V``` to paste into vim and the terminal.
+* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-p``` to paste into vim and the terminal.
 
 ## Create a zip
 ```
@@ -719,6 +695,22 @@ $ scp <local-file> <remote-user>@<remote-host>:<remote-directory>/
 * Copy a directory from the local machine to a remote host:
 ```
 $ scp -r <local-directory>/ <remote-user>@<remote-host>:<remote-directory>/
+```
+
+## feh
+* Open a file:
+```
+$ feh <file>
+```
+* Open all files in the current directory:
+```
+$ feh
+```
+
+## mpv
+* Open a file:
+```
+$ mpv <file>
 ```
 
 ## solhint
@@ -762,7 +754,8 @@ $ sudo pacman -S pacman-contrib
 * ```-S``` → Synchronize packages.
 * ```-y``` → Refresh package database.
 * ```-u``` → Upgrade all installed packages.
-* List orphaned programs:
+
+## List Orphaned Programs
 ```
 $ sudo pacman -Qdtq
 ```
@@ -770,16 +763,19 @@ $ sudo pacman -Qdtq
 * ```-d``` → Restrict to packages installed as dependencies.
 * ```-t``` → Restrict to unrequired packages.
 * ```-q``` → Show package names only.
-* Recursively delete orphans:
+
+## Recursively Delete Orphans
 ```
 $ sudo pacman -Rns $(pacman -Qdtq)
 ```
-* Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed.
+
+## Review Conflicts
+* Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed:
 ```
 $ sudo pacdiff
 ```
 
-## Using pacman:
+## Using pacman: (*** UNTESTED ***)
 * Remove a package and its dependencies which are no longer required:
 ```
 # pacman -Rns <package>
@@ -787,6 +783,7 @@ $ sudo pacdiff
 * ```-R``` → Remove package.
 * ```-n``` → Remove backup configuration files.
 * ```-s``` → Remove unneeded dependencies.
+
 * List all explicitly installed packages:
 ```
 $ sudo pacman -Qe
