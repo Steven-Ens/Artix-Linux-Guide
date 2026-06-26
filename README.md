@@ -461,6 +461,10 @@ $ sudo ufw status verbose
 ```
 $ nmcli con show
 ```
+* Set the IP address:
+```
+$ nmcli con mod "Wired connection 1" ipv4.addresses <ip address>/24
+```
 * Find the default gateway:
 ```
 $ ip r | grep default
@@ -468,10 +472,6 @@ $ ip r | grep default
 * Set the default gateway:
 ```
 $ nmcli con mod "Wired connection 1" ipv4.gateway <ip address>
-```
-* Set the IP address:
-```
-$ nmcli con mod "Wired connection 1" ipv4.addresses <ip address>/24
 ```
 * Set the DNS servers to Cloudflare:
 ```
@@ -499,21 +499,25 @@ $ sudo pacman -S openvpn
 ```
 $ cd /etc/openvpn
 ```
-* Download the configuration file:
-```
-$ sudo curl -o openvpn.zip https://www.privateinternetaccess.com/openvpn/openvpn-nextgen.zip
-```
+* Download the PIA configuration files for UDP Strong at: https://www.privateinternetaccess.com/openvpn/openvpn-strong.zip
 * Extract the downloaded file to ```client/```:
 ```
-$ sudo unzip openvpn.zip -d /etc/openvpn/client/
+$ sudo unzip openvpn-strong.zip -d client/
 ```
-* Create ```/etc/openvpn/login.txt``` with the format:
-```username```
-```password```
+* Create ```login.txt```:
+```
+$ sudo vim login.txt
+```
+* Copy your PIA username and password in the format:
+* ```username```
+* ```password```
 * Secure ```login.txt``` so only root can access the stored username and password:
 ```
-sudo chown root:root /etc/openvpn/login.txt
-sudo chmod 600 /etc/openvpn/login.txt
+sudo chmod 600 login.txt
+```
+* Confirm:
+```
+$ ls
 ```
 * Test connection:
 ```
@@ -723,7 +727,7 @@ $ mpv <file>
 }
 ```
 
-# First Update of the System
+# Before the First System Update
 
 ## pacman
 * Uncomment the following lines in ```/etc/pacman.conf```:
