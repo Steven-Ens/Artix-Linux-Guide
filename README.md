@@ -536,7 +536,7 @@ $ sudo ln -s /etc/runit/sv/sshd /run/runit/service/
 ```
 * Verify:
 ```
-$ sv status sshd
+$ sudo sv status sshd
 ```
 * Allow ssh in ufw:
 ```
@@ -567,15 +567,15 @@ $ ssh-copy-id <user>@<ip address>
 ```
 $ ssh <user>@<ip address>
 ```
-* Harden sshd:
+* Harden sshd on the server:
 ```
 $ sudo vim /etc/ssh/sshd_config
 ```
-* Change:
+* Add under ```# Authentication```:
+  	* ```AllowUsers <user>```
+* Modify to:
+  	* ```PermitRootLogin no```
 	* ```PasswordAuthentication no```
-	* ```PubkeyAuthentication yes```
-	* ```PermitRootLogin no```
-	* ```AllowUsers <user>```
 * Restart sshd:
 ```
 $ sudo sv restart sshd
@@ -732,7 +732,6 @@ $ mpv <file>
 ## pacman
 * Uncomment the following lines in ```/etc/pacman.conf```:
 * ```Color``` → Improves readability by highlighting package information and status messages.
-* ```CheckSpace``` → Verifies sufficient disk space is available before installing or upgrading packages.
 * ```VerbosePkgLists``` → Displays installed and available package versions during upgrades, making changes easier to review.
 
 ## Install pacdiff
@@ -742,11 +741,11 @@ $ sudo pacman -S pacman-contrib
 
 ## Initialize Pacman Keys
 ```
-# pacman-key --init
+$ sudo pacman-key --init
 ```
 * ```init``` → Creates the local pacman GPG keyring used to verify package signatures.
 ```
-# pacman-key --populate artix
+$ sudo pacman-key --populate artix
 ```
 * ```--populate``` → Imports the trusted Artix package signing keys into pacman's keyring.
 * ```artix``` → Uses the Artix keyring only.
@@ -755,7 +754,7 @@ $ sudo pacman -S pacman-contrib
 
 ## Update the System
 ```
-# pacman -Syu
+$ sudo pacman -Syu
 ```
 * ```-S``` → Synchronize packages.
 * ```-y``` → Refresh package database.
@@ -784,7 +783,7 @@ $ sudo pacdiff
 ## Using pacman:
 * Remove a package and its dependencies which are no longer required:
 ```
-# pacman -Rns <package>
+$ sudo pacman -Rns <package>
 ```
 * ```-R``` → Remove package.
 * ```-n``` → Remove backup configuration files.
