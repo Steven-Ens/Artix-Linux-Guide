@@ -295,12 +295,14 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 ```
 # exit
 ```
-* Recursively unmount ```/mnt``` and reboot:
+* Recursively unmount ```/mnt```:
 ```                         
 # umount -R /mnt
+```
+* Reboot, noting that wireless connections will need to be reactivated:
+```
 # reboot
 ```
-* Wireless connections will need to be re-created.
 
 ## Install the Terminal & System Font
 ```
@@ -775,7 +777,7 @@ $ sudo pacman -Rns $(pacman -Qdtq)
 $ sudo pacdiff
 ```
 
-## Using pacman: (*** UNTESTED ***)
+## Using pacman:
 * Remove a package and its dependencies which are no longer required:
 ```
 # pacman -Rns <package>
@@ -797,7 +799,7 @@ $ sudo pacman -Qe
 $ sudo pacman-key --refresh-keys
 ```
 
-## Backup the EFI and Root Filesystems with fsarchiver
+## Backup the EFI and Root Filesystems with fsarchiver (*** UNTESTED ***)
 Install fsarchiver:
 ```bash
 sudo pacman -S fsarchiver
