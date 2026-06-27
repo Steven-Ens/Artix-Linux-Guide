@@ -49,7 +49,7 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 * On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI.
 * The following worked:
 	* Reset the BIOS to its default.
-   	* Set the install media as the first boot device.
+   	* Set the installation media as the first boot device.
 	* Boot options:
 		* ```Boot Mode: Both```
 		* ```Boot Priority: UEFI First```
@@ -309,13 +309,12 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt 
 $ sudo pacman -S kitty ttf-dejavu
 ```
 
-## Auto Numlock On Boot
+## Install numlockx
 ```
 $ sudo pacman -S numlockx
 ```
 
-## Keyboard Brightness
-* Install:
+## Install brightnessctl
 ```
 $ sudo pacman -S brightnessctl
 ```
@@ -326,8 +325,7 @@ $ sudo usermod -aG video <user>
 * ```-a``` → Append group keeping existing groups
 * ```-G``` → Add supplementary groups
 
-## Audio
-* Install:
+## Install pipewire
 ```
 $ sudo pacman -S pipewire pipewire-pulse wireplumber
 ```
