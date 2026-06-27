@@ -461,7 +461,7 @@ $ nmcli con show
 ```
 * Set the IP address:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.addresses <ip address>/24
+$ nmcli con mod "<connection>" ipv4.addresses <ip address>/24
 ```
 * Find the default gateway:
 ```
@@ -469,23 +469,23 @@ $ ip r | grep default
 ```
 * Set the default gateway:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.gateway <ip address>
+$ nmcli con mod "<connection>" ipv4.gateway <ip address>
 ```
 * Set the DNS servers to Cloudflare:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1 1.0.0.1"
+$ nmcli con mod "<connection>" ipv4.dns "1.1.1.1 1.0.0.1"
 ```
 * Change from DHCP to a static IP:
 ```
-$ nmcli con mod "Wired connection 1" ipv4.method manual
+$ nmcli con mod "<connection>" ipv4.method manual
 ```
 * Disable IPv6 for PIA VPN:
 ```
-$ nmcli con mod "Wired connection 1" ipv6.method disabled
+$ nmcli con mod "<connection>" ipv6.method disabled
 ```
 * Reload the connection:
 ```
-$ nmcli con up "Wired connection 1"
+$ nmcli con up "<connection>"
 ```
 
 ## Private Internet Access VPN
