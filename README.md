@@ -19,7 +19,7 @@ $ sha256sum artix-base-runit-<version>-x86_64.iso
 ```
 $ gpg --auto-key-retrieve --verify artix-base-runit-<version>-x86_64.iso.sig artix-base-runit-<version>-x86_64.iso
 ```
-* Make sure the RSA key is the key specified on the Artix website under **Official ISO Images** (eg. [`0xB886B428`](https://pgpkeys.eu:11371/pks/lookup?search=0xA574A1915CEDE31A3BFF5A68606520ACB886B428&fingerprint=on&op=index)).
+* Make sure the RSA key is the key specified on the Artix website under **Official ISO Images** (eg. [```0xB886B428```](https://pgpkeys.eu:11371/pks/lookup?search=0xA574A1915CEDE31A3BFF5A68606520ACB886B428&fingerprint=on&op=index)).
 * You may see:
 ```
 WARNING: This key is not certified with a trusted signature!
@@ -455,7 +455,7 @@ $ sudo ufw status verbose
 ## Static IP Address
 * Show active connections:
 	* Ethernet uses ```Wired connection 1``` by default.
-	* Wireless uses the network name <SSID>.
+	* Wireless uses the network name \<SSID\>.
 ```
 $ nmcli con show
 ```
@@ -554,7 +554,7 @@ $ ssh <user>@<ip address>
 ```
 $ ssh-keygen -t ed25519 -a 100
 ```
-* ```-t ed25519``` → Edwards-curve Digital Signature Algorithm
+* ```-t ed25519``` → Edwards-Curve Digital Signature Algorithm.
 * ```-a 100``` → Specifies the number of Key Derivation Function (KDF) rounds used to protect the private key if you set a passphrase.
 * Accept the default location ```~/.ssh/id_ed25519```.
 * Copy the public key to the server:
@@ -630,6 +630,28 @@ $ sudo sv status cronie
 ```
 
 # System Usage
+
+## pacman:
+* Remove a package and its dependencies which are no longer required:
+```
+$ sudo pacman -Rns <package>
+```
+* ```-R``` → Remove package.
+* ```-n``` → Remove backup configuration files.
+* ```-s``` → Remove unneeded dependencies.
+
+* List all explicitly installed packages:
+```
+$ sudo pacman -Qe
+```
+* ```-Q``` → Query the local package database.
+* ```-e``` → Show explicitly installed packages only.
+
+## Troubleshooting pacman
+* If you see errors related to the package signing keyring, refresh the keys:
+```
+$ sudo pacman-key --refresh-keys
+```
 
 ## Using runit
 * Enable and start a service in the current runlevel:
@@ -727,7 +749,7 @@ $ mpv <file>
 
 # Before the First System Update
 
-## pacman
+## pacman Output
 * Uncomment the following lines in ```/etc/pacman.conf```:
 * ```Color``` → Improves readability by highlighting package information and status messages.
 * ```VerbosePkgLists``` → Displays installed and available package versions during upgrades, making changes easier to review.
@@ -776,28 +798,6 @@ $ sudo pacman -Rns $(pacman -Qdtq)
 * Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed:
 ```
 $ sudo pacdiff
-```
-
-## Using pacman:
-* Remove a package and its dependencies which are no longer required:
-```
-$ sudo pacman -Rns <package>
-```
-* ```-R``` → Remove package.
-* ```-n``` → Remove backup configuration files.
-* ```-s``` → Remove unneeded dependencies.
-
-* List all explicitly installed packages:
-```
-$ sudo pacman -Qe
-```
-* ```-Q``` → Query the local package database.
-* ```-e``` → Show explicitly installed packages only.
-
-## Troubleshooting pacman
-* If you see errors related to the package signing keyring, refresh the keys:
-```
-$ sudo pacman-key --refresh-keys
 ```
 
 ## Backup the EFI and Root Filesystems with fsarchiver (*** UNTESTED ***)
