@@ -581,28 +581,6 @@ $ sudo sv restart sshd
 
 # System Usage
 
-## pacman:
-* Remove a package and its dependencies which are no longer required:
-```
-$ sudo pacman -Rns <package>
-```
-* ```-R``` → Remove package.
-* ```-n``` → Remove backup configuration files.
-* ```-s``` → Remove unneeded dependencies.
-
-* List all explicitly installed packages:
-```
-$ sudo pacman -Qe
-```
-* ```-Q``` → Query the local package database.
-* ```-e``` → Show explicitly installed packages only.
-
-## Troubleshooting pacman
-* If you see errors related to the package signing keyring, refresh the keys:
-```
-$ sudo pacman-key --refresh-keys
-```
-
 ## Using runit
 * Enable and start a service in the current runlevel:
 ```
@@ -744,6 +722,27 @@ $ sudo pacman -Qdtq
 $ sudo pacman -Rns $(pacman -Qdtq)
 ```
 
+## List All Explicitly Installed Packages
+```
+$ sudo pacman -Qe
+```
+* ```-Q``` → Query the local package database.
+* ```-e``` → Show explicitly installed packages only.
+
+## Remove a Package With Dependencies
+```
+$ sudo pacman -Rns <package>
+```
+* ```-R``` → Remove package.
+* ```-n``` → Remove backup configuration files.
+* ```-s``` → Remove unneeded dependencies.
+
+## Troubleshooting pacman
+* If you see errors related to the package signing keyring, refresh the keys:
+```
+$ sudo pacman-key --refresh-keys
+```
+
 ## Review Conflicts
 * Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed:
 ```
@@ -784,7 +783,7 @@ $ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
 ```
 $ sudo vim /etc/cron.hourly/backup
 ```
-* Add:
+* Add the following:
 ```
 #!/bin/bash
 rsync -a --delete /home/<user>/ /mnt/usb/
