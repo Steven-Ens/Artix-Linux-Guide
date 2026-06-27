@@ -600,7 +600,7 @@ UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
     * ```2``` → Other filesystems
     * ```0``` → Disable checking
 
-## Auto Backup /home/<user>
+## Auto Backup /home/\<user\>
 * Install:
 ```
 $ sudo pacman -S rsync cronie cronie-runit
