@@ -579,56 +579,6 @@ $ sudo vim /etc/ssh/sshd_config
 $ sudo sv restart sshd
 ```
 
-## Auto Mount USB:
-* Find the UUID of the USB drive:
-```
-$ lsblk -f
-```
-* Create a separate mount point for USB devices ```/mnt/usb```:
-```
-$ sudo mkdir /mnt/usb/
-```
-* Add the following line to ```/etc/fstab``` using the device UUID:
-```
-# /dev/sdb1
-UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
-```
-* ```nofail``` → Continue booting even if the USB drive is disconnected.
-* ```dump``` → Legacy backup field used by the ```dump``` utility. Almost always set to ```0```.
-* ```fsck``` → Sets filesystem check order at boot.
-    * ```1``` → Root filesystem
-    * ```2``` → Other filesystems
-    * ```0``` → Disable checking
-
-## Auto Backup /home/\<user\>
-* Install:
-```
-$ sudo pacman -S rsync cronie cronie-runit
-```
-* Autostart the service:
-```
-$ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
-```
-* Create the backup script:
-```
-$ sudo vim /etc/cron.hourly/backup
-```
-* Add:
-```
-#!/bin/bash
-rsync -a --delete /home/<user>/ /mnt/usb/
-```
-* ```a``` → Archive mode that recursively preserves file attributes.
-* ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
-* Make the script executable:
-```
-$ sudo chmod +x /etc/cron.hourly/backup
-```
-* Verify cronie is running:
-```
-$ sudo sv status cronie
-```
-
 # System Usage
 
 ## pacman:
@@ -798,6 +748,56 @@ $ sudo pacman -Rns $(pacman -Qdtq)
 * Review differences between configuration files and their corresponding ```.pacnew``` files, then merge or remove them as needed:
 ```
 $ sudo pacdiff
+```
+
+## Auto Mount USB:
+* Find the UUID of the USB drive:
+```
+$ lsblk -f
+```
+* Create a separate mount point for USB devices ```/mnt/usb```:
+```
+$ sudo mkdir /mnt/usb/
+```
+* Add the following line to ```/etc/fstab``` using the device UUID:
+```
+# /dev/sdb1
+UUID=<UUID>  /mnt/usb  ext4  nofail  0 2
+```
+* ```nofail``` → Continue booting even if the USB drive is disconnected.
+* ```dump``` → Legacy backup field used by the ```dump``` utility. Almost always set to ```0```.
+* ```fsck``` → Sets filesystem check order at boot.
+    * ```1``` → Root filesystem
+    * ```2``` → Other filesystems
+    * ```0``` → Disable checking
+
+## Auto Backup /home/\<user\>
+* Install:
+```
+$ sudo pacman -S rsync cronie cronie-runit
+```
+* Autostart the service:
+```
+$ sudo ln -s /etc/runit/sv/cronie /run/runit/service/
+```
+* Create the backup script:
+```
+$ sudo vim /etc/cron.hourly/backup
+```
+* Add:
+```
+#!/bin/bash
+rsync -a --delete /home/<user>/ /mnt/usb/
+```
+* ```a``` → Archive mode that recursively preserves file attributes.
+* ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
+* Make the script executable:
+```
+$ sudo chmod +x /etc/cron.hourly/backup
+```
+* Verify cronie is running:
+```
+$ sudo sv status cronie
 ```
 
 ## Backup the EFI and Root Filesystems with fsarchiver (*** UNTESTED ***)
