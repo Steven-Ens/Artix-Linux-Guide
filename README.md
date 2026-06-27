@@ -369,6 +369,11 @@ $ sudo pacman -S feh
 $ sudo pacman -S mpv
 ```
 
+## Install qbittorrent
+```
+$ sudo pacman -S qbittorrent
+```
+
 ## Install Foundry
 ```
 $ curl -L https://foundry.paradigm.xyz | bash
