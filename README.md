@@ -40,11 +40,11 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 ```
 # cat /sys/firmware/efi/fw_platform_size
 ```
-If the command returns 64, the system is booted in UEFI mode and has a 64-bit x64 UEFI. If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
+If the command returns 64, the system is booted in UEFI mode and has a 64-bit UEFI. If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
 
 ## ThinkPad T440 UEFI Troubleshooting
 On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI. The following worked:
-* Reset the BIOS to its default.
+* Reset the BIOS to its defaults.
 * Set the installation media as the first boot device.
 * Boot options:
 	* ```Boot Mode: Both```
@@ -119,7 +119,7 @@ Verify the mounted filesystems:
 # lsblk
 ```
 
-## Setup Internet Connection
+## Internet Connection
 If using WiFi, connect to your network:
 ```
 # nmtui
@@ -151,12 +151,12 @@ Confirm:
 # cat /mnt/etc/fstab
 ```
 
-## chroot into the New System
+## Change Root into the New System
 ```
 # artix-chroot /mnt /bin/bash
 ```
 
-## Install microcode:
+## Install Microcode
 ```
 # pacman -S intel-ucode
 ```
@@ -196,7 +196,7 @@ Safe to ignore ```WARNING: Possibly missing firmware for module: 'qat_6000'``` o
 # ln -sf /usr/share/zoneinfo/<country>/<region> /etc/localtime
 ```
 
-## Run hwclock to Generate /etc/adjtime:
+## Generate /etc/adjtime:
 ```
 # hwclock --systohc
 ```
@@ -215,7 +215,7 @@ Set the system locale:
 ```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
-Confirm by listing all locales:
+Confirm that the locale was generated:
 ```
 # locale -a
 ```
@@ -229,7 +229,7 @@ Install:
 # refind-install
 ```
 Edit the config:
-* Change ```timeout``` to ```-1``` seconds to automatically start the kernel.
+* Change ```timeout``` to ```-1``` seconds to automatically boot the default kernel.
 * Uncomment ```textonly``` to remove the icons.
 ```
 # vim /boot/EFI/refind/refind.conf
@@ -240,14 +240,14 @@ Configure ```refind_linux.conf``` to pass the correct LUKS boot options, startin
 ```
 Edit the file:
 ```
-# vim refind_linux.conf
+# vim /boot/refind_linux.conf
 ```
 Add the following line to the top using the UUID copied into the file:
 ```
 "Boot with LUKS" "cryptdevice=UUID=<UUID>:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
-## Install networkmanager
+## Install Network Manager
 ```
 # pacman -S networkmanager networkmanager-runit
 ```
@@ -256,12 +256,12 @@ Autostart with runit (```/run``` is tmpfs filesystem and is created at boot, so 
 # ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ```
 
-## Set hostname
+## Set Hostname
 ```
 # echo <hostname> > /etc/hostname
 ```
 
-## Set root Password
+## Set Root Password
 ```
 # passwd
 ```
@@ -278,7 +278,7 @@ Set user password:
 # passwd <user>
 ``` 
 
-## Add User to sudoers
+## Add User to /etc/sudoers
 Give wheel group sudo permissions:
 ```
 # vim /etc/sudoers
@@ -330,12 +330,12 @@ $ sudo pacman -S pipewire pipewire-pulse wireplumber
 $ sudo pacman -S zip unzip
 ```
 
-## Install xorg:
+## Install Xorg:
 ```
 $ sudo pacman -S xorg-server xorg-xinit xorg-xset xorg-xrandr
 ```
 
-## Install i3wm:
+## Install i3 Window Manager:
 Select ```i3-wm```, ```i3status``` and ```i3lock```:
 ```
 $ sudo pacman -S i3 
@@ -364,7 +364,7 @@ $ sudo pacman -S feh
 $ sudo pacman -S mpv
 ```
 
-## Install qbittorrent
+## Install qBittorrent
 ```
 $ sudo pacman -S qbittorrent
 ```
@@ -400,7 +400,7 @@ Reboot:
 $ sudo reboot
 ```
 
-## Install nvm, node and npm
+## Install NVM, Node.js and npm
 Install NVM:
 ```
 $ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
@@ -424,7 +424,7 @@ $ npm -v
 $ npm install -g @nomicfoundation/solidity-language-server
 ```
 
-## Install solhint Globally
+## Install Solhint Globally
 ```
 $ npm install -g solhint
 ```
@@ -511,7 +511,7 @@ Copy your PIA username and password in the format:
 
 Secure ```login.txt``` so only root can access the stored username and password:
 ```
-sudo chmod 600 login.txt
+$ sudo chmod 600 login.txt
 ```
 Confirm:
 ```
@@ -519,7 +519,7 @@ $ ls
 ```
 Test connection:
 ```
-$ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt'
+$ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt
 ```
 * ```--auth-nocache``` → Prevents OpenVPN from retaining the username and password in memory after authentication.
 
@@ -612,8 +612,8 @@ List all running services:
 ```
 
 ## Copy & Paste
-* Use ```CTL-Shift-c``` and ```CTL-Shift-p``` to copy and paste between vim and the terminal.
-* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-p``` to paste into vim and the terminal.
+* Use ```CTL-Shift-C``` and ```CTL-Shift-V``` to copy and paste between vim and the terminal.
+* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-V``` to paste into vim and the terminal.
 
 ## zip & unzip
 zip a file
