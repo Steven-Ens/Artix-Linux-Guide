@@ -2,7 +2,7 @@
 Official Installation Guide: https://wiki.artixlinux.org/Main/Installation
 
 ## What This Guide Provides
-This guide implements the following:
+This guide installs a system with:
 * GPT + UEFI
 * rEFInd
 * runit
@@ -13,7 +13,7 @@ This guide implements the following:
 ```
 $ sha256sum artix-base-runit-<version>-x86_64.iso
 ```
-Compare the output against the SHA256 checksum listed on the Artix download page: https://artixlinux.org/download.php.
+Compare the output with the SHA256 checksum listed on the Artix download page: https://artixlinux.org/download.php.
   
 ## Verify the ISO Signature
 ```
@@ -191,12 +191,12 @@ Safe to ignore ```WARNING: Possibly missing firmware for module: 'qat_6000'``` o
 * ```-q``` → Quit after syncing once.
 * ```-g``` → Allow a large initial time correction.
 
-## Set the Time Zone:
+## Set the Time Zone
 ```
 # ln -sf /usr/share/zoneinfo/<country>/<region> /etc/localtime
 ```
 
-## Generate /etc/adjtime:
+## Generate /etc/adjtime
 ```
 # hwclock --systohc
 ```
@@ -215,12 +215,12 @@ Set the system locale:
 ```
 # echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
-Confirm that the locale was generated:
+Verify that the locale was generated:
 ```
 # locale -a
 ```
 
-## Configure rEFInd:
+## Configure rEFInd
 ```
 # pacman -S refind
 ```
@@ -247,7 +247,7 @@ Add the following line to the top using the UUID copied into the file:
 "Boot with LUKS" "cryptdevice=UUID=<UUID>:cryptroot root=/dev/mapper/cryptroot rw"
 ```
 
-## Install Network Manager
+## Install NetworkManager
 ```
 # pacman -S networkmanager networkmanager-runit
 ```
@@ -330,18 +330,18 @@ $ sudo pacman -S pipewire pipewire-pulse wireplumber
 $ sudo pacman -S zip unzip
 ```
 
-## Install Xorg:
+## Install Xorg
 ```
 $ sudo pacman -S xorg-server xorg-xinit xorg-xset xorg-xrandr
 ```
 
-## Install i3 Window Manager:
+## Install i3 Window Manager
 Select ```i3-wm```, ```i3status``` and ```i3lock```:
 ```
 $ sudo pacman -S i3 
 ```
 
-## Install Firefox
+## Install firefox
 Select the ```pipewire-jack``` provider:
 ```
 $ sudo pacman -S firefox pipewire-jack
@@ -424,7 +424,7 @@ $ npm -v
 $ npm install -g @nomicfoundation/solidity-language-server
 ```
 
-## Install Solhint Globally
+## Install solhint Globally
 ```
 $ npm install -g solhint
 ```
@@ -509,7 +509,7 @@ Copy your PIA username and password in the format:
 * ```username```
 * ```password```
 
-Secure ```login.txt``` so only root can access the stored username and password:
+Secure ```login.txt``` so that only root can access the stored username and password:
 ```
 $ sudo chmod 600 login.txt
 ```
@@ -612,8 +612,8 @@ List all running services:
 ```
 
 ## Copy & Paste
-* Use ```CTL-Shift-C``` and ```CTL-Shift-V``` to copy and paste between vim and the terminal.
-* Use ```CTL-c``` to copy inside of Firefox, then use ```CTL-Shift-V``` to paste into vim and the terminal.
+* Use ```CTRL-Shift-C``` and ```CTRL-Shift-V``` to copy and paste between vim and the terminal.
+* Use ```CTRL-C``` to copy inside of Firefox, then use ```CTRL-Shift-V``` to paste into vim and the terminal.
 
 ## zip & unzip
 zip a file
@@ -749,7 +749,7 @@ Review differences between configuration files and their corresponding ```.pacne
 $ sudo pacdiff
 ```
 
-## Auto Mount USB:
+## Automatically Mount USB:
 Find the UUID of the USB drive:
 ```
 $ lsblk -f
@@ -803,13 +803,13 @@ $ sudo sv status cronie
 ## Disk Cloning
 Please note that ```dd``` completely overwrites the destination disk. Always verify the source and destination before running:
 ```
-lsblk -o NAME,SIZE,MODEL
+$ lsblk -o NAME,SIZE,MODEL
 ```
 Backup to the external drive:
 ```
-sudo dd if=/dev/sdX of=/dev/sdX bs=64M status=progress conv=fsync
+$ sudo dd if=/dev/sdX of=/dev/sdY bs=64M status=progress conv=fsync
 ```
 Restore to the internal drive:
 ```
-sudo dd if=/dev/sdX of=/dev/sdX bs=64M status=progress conv=fsync
+$ sudo dd if=/dev/sdY of=/dev/sdX bs=64M status=progress conv=fsync
 ```
