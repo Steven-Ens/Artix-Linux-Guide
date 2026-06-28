@@ -508,6 +508,7 @@ $ sudo vim login.txt
 Copy your PIA username and password in the format:
 * ```username```
 * ```password```
+
 Secure ```login.txt``` so only root can access the stored username and password:
 ```
 sudo chmod 600 login.txt
@@ -520,7 +521,7 @@ Test connection:
 ```
 $ sudo openvpn --config /etc/openvpn/client/ca_vancouver.ovpn --auth-nocache --auth-user-pass /etc/openvpn/login.txt'
 ```
-* ```--auth-nocache``` Prevents OpenVPN from retaining the username and password in memory after authentication.
+* ```--auth-nocache``` → Prevents OpenVPN from retaining the username and password in memory after authentication.
 
 ## OpenSSH Server
 Install:
@@ -555,6 +556,7 @@ $ ssh-keygen -t ed25519 -a 100
 ```
 * ```-t ed25519``` → Edwards-Curve Digital Signature Algorithm.
 * ```-a 100``` → Specifies the number of Key Derivation Function (KDF) rounds used to protect the private key if you set a passphrase.
+
 Copy the public key to the server:
 ```
 $ ssh-copy-id <user>@<ip address>
@@ -788,6 +790,7 @@ rsync -a --delete /home/<user>/ /mnt/usb/
 ```
 * ```a``` → Archive mode that recursively preserves file attributes.
 * ```delete``` → Removes files from the backup that no longer exist in the source directory, keeping an exact mirror.
+
 Make the script executable:
 ```
 $ sudo chmod +x /etc/cron.hourly/backup
