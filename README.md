@@ -389,7 +389,7 @@ $ foundry --version
 ```
 $ git clone https://github.com/Steven-Ens/Dotfiles
 ```
-Go to ```scripts/```:
+Go to ```~/Dotfiles/scripts/```:
 ```
 $ cd ~/Dotfiles/scripts/
 ```
@@ -398,7 +398,7 @@ Run the following installation scripts:
 $ sudo ./install_dotfiles.sh
 $ ./install_vim_plugins.sh 
 ```
-Manually link ```~/.vim/colors/nord.vim` to ```/root/```:
+Manually link ```~/.vim/colors/nord.vim``` to ```/root/```:
 ```
 $ sudo mkdir -p /root/.vim/colors
 $ sudo ln -sfn /home/<user>/.vim/colors/nord.vim /root/.vim/colors/nord.vim
