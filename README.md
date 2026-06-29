@@ -40,7 +40,7 @@ $ sudo dd if=~/artix-base-runit-<version>-x86_64.iso of=/dev/sdX bs=4M status=pr
 ```
 # cat /sys/firmware/efi/fw_platform_size
 ```
-If the command returns 64, the system is booted in UEFI mode and has a 64-bit UEFI. If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
+If the command returns ```64```, the system is booted in UEFI mode and has a 64-bit UEFI. If it returns ```No such file or directory```, the system may be booted in BIOS or CSM mode.
 
 ## ThinkPad T440 UEFI Troubleshooting
 On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation media even when the USB is properly configured for UEFI. The following worked:
@@ -50,7 +50,7 @@ On the ThinkPad T440, ```UEFI Only``` mode may fail to boot Linux installation m
 	* ```Boot Mode: Both```
 	* ```Boot Priority: UEFI First```
 	* ```CSM Support: Yes``` (Automatic)
-	* ```Safe Boot: Disabled```
+	* ```Safe Boot: Disabled``` (Automatic)
 
 ## Partition the Disk
 List the block devices and identify the target drive ```/dev/sdX```:
@@ -74,6 +74,7 @@ Inside fdisk:
     * ```19``` → Linux swap
     * ```20``` → Linux filesystem (Default)
 * ```w``` → Write changes to disk and exit
+
 Verify your partitions:
 ```
 # fdisk -l /dev/sdX
@@ -100,7 +101,7 @@ Initialize and enable the swap partition:
 # mkswap /dev/sdX2
 # swapon /dev/sdX2
 ```
-Format the unlocked encrypted root partition:
+Format the unlocked encrypted root partition to ext4:
 ```
 # mkfs.ext4 /dev/mapper/cryptroot
 ```
@@ -146,6 +147,7 @@ Mirrors are defined in ```/etc/pacman.d/mirrorlist```, ensure the ones on the to
 # fstabgen -U /mnt >> /mnt/etc/fstab
 ```
 * ```-U``` → Use UUIDs instead of device names.
+
 Confirm:
 ```
 # cat /mnt/etc/fstab
@@ -172,6 +174,7 @@ Or:
 Find the uncommented ```HOOKS=(...)```:
 * Add ```encrypt``` before ```filesystems```
 * Remove ```consolefont```
+
 Result:
 ```
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap block encrypt filesystems fsck)
@@ -181,6 +184,7 @@ Rebuild initramfs:
 # mkinitcpio -P
 ```
 * ```-P``` → Build all presets.
+
 Safe to ignore ```WARNING: Possibly missing firmware for module: 'qat_6000'``` on systems without Intel QuickAssist (QAT) hardware.
 
 ## Update the System Clock
@@ -229,11 +233,12 @@ Install:
 # refind-install
 ```
 Edit the config:
-* Change ```timeout``` to ```-1``` seconds to automatically boot the default kernel.
-* Uncomment ```textonly``` to remove the icons.
 ```
 # vim /boot/EFI/refind/refind.conf
 ```
+* Change ```timeout``` to ```-1``` seconds to automatically boot the default kernel.
+* Uncomment ```textonly``` to remove the icons.
+
 Configure ```refind_linux.conf``` to pass the correct LUKS boot options, starting with the UUID of ```/dev/sdX3```:
 ```
 # blkid -s UUID -o value /dev/sdX3 > /boot/refind_linux.conf
@@ -273,6 +278,7 @@ Add user to the wheel group:
 ```
 * ```-m``` → Create home directory
 * ```-G``` → Add supplementary groups
+
 Set user password:
 ```
 # passwd <user>
@@ -341,18 +347,11 @@ Select ```i3-wm```, ```i3status``` and ```i3lock```:
 $ sudo pacman -S i3 
 ```
 
-## Install firefox
+## Install Firefox
 Select the ```pipewire-jack``` provider:
 ```
 $ sudo pacman -S firefox pipewire-jack
 ```
-Prevent the window from auto hiding in fullscreen:
-* Open a new tab and type ```about:config```
-* Type the following in the search box:
-```
-browser.fullscreen.autohide
-```
-* Double click to set to ```False```.
 
 ## Install feh
 ```
@@ -381,6 +380,10 @@ Install Foundry binaries:
 ```
 $ foundryup
 ```
+Verify:
+```
+$ foundry --version
+```
 
 ## Install Dotfiles
 ```
@@ -394,6 +397,11 @@ Run the following installation scripts:
 ```
 $ sudo ./install_dotfiles.sh
 $ ./install_vim_plugins.sh 
+```
+Manually link ```~/.vim/colors/nord.vim` to ```/root/```:
+```
+$ sudo mkdir -p /root/.vim/colors
+$ sudo ln -sfn /home/<user>/.vim/colors/nord.vim /root/.vim/colors/nord.vim
 ```
 Reboot:
 ```
@@ -497,7 +505,14 @@ Change to the OpenVPN directory:
 ```
 $ cd /etc/openvpn
 ```
-Download the PIA configuration files for UDP Strong at: https://www.privateinternetaccess.com/openvpn/openvpn-strong.zip and extract the downloaded file to ```client/```:
+Download the PIA configuration files for UDP Strong:
+```
+$ sudo curl -LO https://www.privateinternetaccess.com/openvpn/openvpn-strong.zip
+```
+* ```-L``` → Follow redirects
+* ```-O``` → Save using the remote filename
+
+Extract the downloaded file to ```client/```:
 ```
 $ sudo unzip openvpn-strong.zip -d client/
 ```
@@ -650,6 +665,15 @@ Copy a directory from the local machine to a remote host:
 ```
 $ scp -r <local-directory>/ <remote-user>@<remote-host>:<remote-directory>/
 ```
+
+## Firefox
+Prevent the window from auto hiding in fullscreen:
+* Open a new tab and type ```about:config```
+* Type the following in the search box:
+```
+browser.fullscreen.autohide
+```
+* Double click to set to ```False```.
 
 ## feh
 Open a file:
