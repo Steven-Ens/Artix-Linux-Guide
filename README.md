@@ -586,9 +586,11 @@ $ sudo vim /etc/ssh/sshd_config
 ```
 Add under ```# Authentication```:
 * ```AllowUsers <user>```
+
 Modify to:
 * ```PermitRootLogin no```
 * ```PasswordAuthentication no```
+
 Restart sshd:
 ```
 $ sudo sv restart sshd
@@ -631,7 +633,7 @@ List all running services:
 * Use ```CTRL-C``` to copy inside of Firefox, then use ```CTRL-Shift-V``` to paste into vim and the terminal.
 
 ## zip & unzip
-zip a file
+zip a file:
 ```
 $ zip <file>.zip <file>
 ```
@@ -639,7 +641,7 @@ zip a directory recursively:
 ```
 $ zip -r <file>.zip <directory>/
 ```
-Extract a zip
+Extract a zip:
 ```
 $ unzip <file>.zip
 ```
@@ -668,12 +670,9 @@ $ scp -r <local-directory>/ <remote-user>@<remote-host>:<remote-directory>/
 
 ## Firefox
 Prevent the window from auto hiding in fullscreen:
-* Open a new tab and type ```about:config```
-* Type the following in the search box:
-```
-browser.fullscreen.autohide
-```
-* Double click to set to ```False```.
+* Open a new tab and type: ```about:config```
+* Type the following in the search field: ```browser.fullscreen.autohide```
+* Double click to set to ```False```
 
 ## feh
 Open a file:
