@@ -408,8 +408,8 @@ Reboot:
 $ sudo reboot
 ```
 
-## Install NVM, Node.js and npm
-Install NVM:
+## Install nvm, Node.js and npm
+Install nvm:
 ```
 $ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
 ```
@@ -690,12 +690,44 @@ Open a file:
 $ mpv <file>
 ```
 
-## solhint
-In the root of each project repo add the file ```.solhint.json``` with the following configuration:
+## Foundry
+Create an empty Foundry project with a generated ```.gitignore``` and ```.solhint.json```:
 ```
-{
-  "extends": "solhint:recommended"
-}
+$ new <project directory>
+```
+Install OpenZeppelin contracts:
+```
+$ forge install OpenZeppelin/openzeppelin-contracts
+```
+If using OpenZeppelin's upgradeable contracts, this package also installs the standard OpenZeppelin contracts library as a dependency.
+```
+$ forge install OpenZeppelin/openzeppelin-contracts-upgradeable
+```
+Compile the project:
+```
+$ forge build
+```
+Run tests:
+```
+$ forge test -vvv
+```
+Deploy a script to a network and verify the contract(s):
+```
+$ forge script script/Deploy.s.sol --rpc-url $RPC_URL --verify --etherscan-api-key $ETHERSCAN_API_KEY --broadcast
+```
+
+## Cast
+Create a new wallet key pair:
+```
+$ cast wallet new
+```
+Display an address balance:
+```
+$ cast balance <address> --rpc-url $RPC_URL
+```
+Get the current block number:
+```
+$ cast block-number --rpc-url $RPC_URL
 ```
 
 # Before the First System Update
