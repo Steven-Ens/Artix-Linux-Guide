@@ -402,7 +402,7 @@ Install code coverage crate:
 $ cargo +stable install cargo-llvm-cov --locked
 ```
 
-# Install ctags
+## Install ctags
 ```
 $ sudo pacman -S ctags
 ```
