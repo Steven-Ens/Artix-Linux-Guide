@@ -402,6 +402,11 @@ Install code coverage crate:
 $ cargo +stable install cargo-llvm-cov --locked
 ```
 
+# Install ctags
+```
+$ sudo pacman -S ctags
+```
+
 ## Install Dotfiles
 ```
 $ git clone https://github.com/Steven-Ens/Dotfiles
