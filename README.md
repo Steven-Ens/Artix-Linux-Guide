@@ -534,6 +534,40 @@ Run:
 $ ledger-live
 ```
 
+## Install Ledger udev rules:
+```
+$ cd /tmp
+```
+Download Ledger's official udev rules script:
+```
+$ curl -fL -o add_udev_rules.sh https://raw.githubusercontent.com/LedgerHQ/udev-rules/master/add_udev_rules.sh
+```
+Inspect the script before running it:
+```
+$ cat add_udev_rules.sh
+```
+* Check that it writes to the Ledger udev rules file: ```/etc/udev/rules.d/20-hw1.rules```
+* Check for the older Ledger USB vendor ID: ```ATTRS{idVendor}=="2581"```
+* Check for the current Ledger USB vendor ID: ```ATTRS{idVendor}=="2c97"```
+* Check that USB access permissions are being added: ```TAG+="uaccess"``` and ```TAG+="udev-acl"```
+* Check for the Ledger hidraw rule: ```KERNEL=="hidraw*", ATTRS{idVendor}=="2c97", MODE="0666"```
+* Check that the script reloads the udev rules: ```udevadm control --reload-rules```
+* Check that it triggers udev afterward: ```udevadm trigger```
+
+Make the script executable:
+```
+$ chmod +x add_udev_rules.sh
+```
+Verify:
+```
+$ ls add_udev_rules.sh
+```
+Install the Ledger udev rules:
+```
+$ sudo ./add_udev_rules.sh
+```
+Reload Ledger Live and connect the Ledger.
+
 ## Install ufw
 ```
 $ sudo pacman -S ufw ufw-runit
